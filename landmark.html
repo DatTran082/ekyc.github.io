@@ -9,9 +9,9 @@
   </head>
 
   <body>
-    <h1>quay mặt từ phải qua trái
-      <div id="timer">recording: 00:05</div>
-      <div id="message"></div>
+    <h1>Face Detection quay mặt từ phải qua trái
+
+      <div id="timer">00:05</div>
     </h1>
     <!-- <video id="video" autoplay style="display: none"></video> -->
 
@@ -34,12 +34,17 @@
     <!-- camera -->
 
   </body>
-  <!-- 
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface"></script> -->
 
-  <script src="./models/jsdelivr.net_npm_@tensorflow_tfjs"></script>
-  <script src="./models/jsdelivr.net_npm_@tensorflow-models_blazeface"></script>
-  <script src="./scripts/camera.js"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+
+  <!-- You must explicitly require a TF.js backend if you're not using the TF.js union bundle. -->
+  <script type="module"
+    src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
+
+  <script
+    type="module"
+    src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection"></script>
+  <script src="./scripts/faceMask.js"></script>
   <!-- <script src="./scripts/script.js"></script> -->
 </html>

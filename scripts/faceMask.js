@@ -1,3 +1,16 @@
+// import "../landmarkModel/cdn.net_npm_@tensorflow_tfjs-core";
+// import "../landmarkModel/cdn.net_npm_@tensorflow_tfjs-backend-webgl";
+// import "../landmarkModel/cdn.net_npm_@mediapipe_face_mesh";
+// import * as faceLandmarksDetection from "../landmarkModel/cdn.net_npm_@tensorflow-models_face-landmarks-detection";
+
+// import * as faceLandmarksDetection from "./@tensorflow-models/face-landmarks-detection";
+
+import * as faceLandmarksDetection from "@tensorflow-models/face-landmarks-detection";
+import "@tensorflow/tfjs-core";
+// Register WebGL backend.
+import "@tensorflow/tfjs-backend-webgl";
+import "@mediapipe/face_mesh";
+
 const NUM_KEYPOINTS = 6;
 const GREEN = "#32EEDB";
 const RED = "#FF2C35";
@@ -11,7 +24,6 @@ const cameras = {
   videoRecorded: null,
   stream: null,
   _timer: null,
-  _message: null,
   model: null,
   canvas: null,
   ctx: null,
@@ -21,11 +33,19 @@ const cameras = {
     cameras.videoLive = document.querySelector("#videoLive");
     cameras.videoRecorded = document.querySelector("#videoRecorded");
     cameras._timer = document.querySelector("#timer");
-    cameras._message = document.querySelector("#message");
     cameras.canvas = document.getElementById("canvas");
     cameras.ctx = cameras.canvas.getContext("2d");
 
-    cameras.model = model = await blazeface.load();
+    const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh;
+
+    const detectorConfig = {
+      runtime: "tfjs",
+    };
+
+    cameras.model = await faceLandmarksDetection.createDetector(model, {
+      runtime: "tfjs",
+    });
+
     cameras.stream = await navigator.mediaDevices.getUserMedia({
       video: true,
       audio: false,
@@ -63,91 +83,19 @@ const cameras = {
     try {
       if (prediction.length > 1) {
         cameras.reset();
-        this._timer.textContent = "recording: -_-";
-        this._message.textContent = "chỉ cho phép 1 khuôn mặt trong khung hình";
+        this._timer.textContent = "chỉ cho phép 1 khuôn mặt trong khung hình";
       } else if (prediction[0].landmarks.length == 6) {
-        const faceMattrix = prediction[0].landmarks;
-        const probability = prediction[0].probability[0];
-        const WIDTH = prediction[0].bottomRight[0] - prediction[0].topLeft[0];
-        const HEIGHT = prediction[0].bottomRight[1] - prediction[0].topLeft[1];
-
-        // if (WIDTH <= 280 || HEIGHT <= 220) {
-        //   this._message.textContent =
-        //     "Giữ cho khuôn mặt cách màn hình khoảng 30cm";
-        // } else
-
-        if (
-          prediction[0].topLeft[0] < 30 ||
-          prediction[0].topLeft[0] > 290 ||
-          prediction[0].topLeft[1] < 0 ||
-          prediction[0].topLeft[1] > 250
-        ) {
-          this._timer.textContent = "recording: -_-";
-          this._message.textContent = "Giữ cho khuôn mặt ở chính giữa màn hình";
-          cameras.reset();
-        } else if (probability < 0.995) {
-          this._timer.textContent = "recording: -_-";
-          this._message.textContent = "vui lòng giữ khuôn mặt không bị che";
-          cameras.reset();
-        } else {
-          this._message.textContent = "";
-
-          cameras.start();
-        }
-
-        console.table([
-          [
-            "left eye",
-            `X: ${Math.round(faceMattrix[0][0])} | Y: ${Math.round(
-              faceMattrix[0][1]
-            )}`,
-          ],
-          [
-            "right eye",
-            `X: ${Math.round(faceMattrix[1][0])} | Y: ${Math.round(
-              faceMattrix[1][1]
-            )}`,
-          ],
-          [
-            "nose",
-            `X: ${Math.round(faceMattrix[2][0])} | Y: ${Math.round(
-              faceMattrix[2][1]
-            )}`,
-          ],
-          [
-            "left ear",
-            `X: ${Math.round(faceMattrix[3][0])} | Y: ${Math.round(
-              faceMattrix[3][1]
-            )}`,
-          ],
-          [
-            "right ear",
-            `X: ${Math.round(faceMattrix[4][0])} | Y: ${Math.round(
-              faceMattrix[4][1]
-            )}`,
-          ],
-          [
-            "mouth",
-            `X: ${Math.round(faceMattrix[5][0])} | Y: ${Math.round(
-              faceMattrix[5][1]
-            )}`,
-          ],
-          ["X", prediction[0].topLeft[0]],
-          ["Y", prediction[0].topLeft[1]],
-          ["WIDTH", WIDTH],
-          ["HEIGHT", HEIGHT],
-          ["PROBABILITY", probability],
-        ]);
+        cameras.start();
+      } else {
+        cameras.reset();
+        this._timer.textContent = "vui lòng giữ khuôn mặt trong khung hình";
       }
     } catch (error) {
       cameras.reset();
-      this._timer.textContent = "recording: -_-";
-      this._message.textContent = "không tìm thấy khuôn mặt trong khung hình";
+      this._timer.textContent = "vui lòng giữ khuôn mặt trong khung hình";
     }
     // cameras.canvas.width = cameras.videoLive.width;
     // cameras.canvas.height = cameras.videoLive.height;
-    // ctx.scale(-1, 1);
-
     ctx.drawImage(cameras.videoLive, 0, 0, 650, 480);
     prediction.forEach((pred) => {
       // draw the rectangle enclosing the face
@@ -176,8 +124,12 @@ const cameras = {
     });
   },
   detectFaces: async function () {
-    const estimationConfig = { flipHorizontal: true };
-    const prediction = await cameras.model.estimateFaces(this.videoLive, false);
+    const estimationConfig = { flipHorizontal: false };
+
+    const prediction = await cameras.model.estimateFaces(
+      this.videoLive,
+      estimationConfig
+    );
 
     // console.log(prediction);
 
@@ -195,7 +147,7 @@ const cameras = {
       minutes = minutes < 10 ? "0" + minutes : minutes;
       seconds = seconds < 10 ? "0" + seconds : seconds;
 
-      display.textContent = "recording: " + seconds;
+      display.textContent = minutes + ":" + seconds;
 
       if (--timer < 0) {
         timer = 0;
@@ -237,6 +189,67 @@ const cameras = {
 };
 
 cameras.init();
+
+const tempthorixone = [
+  {
+    topLeft: {
+      kept: false,
+      isDisposedInternal: false,
+      shape: [2],
+      dtype: "float32",
+      size: 2,
+      strides: [],
+      dataId: {
+        id: 2809,
+      },
+      id: 2529,
+      rankType: "1",
+      scopeId: 4604,
+    },
+    bottomRight: {
+      kept: false,
+      isDisposedInternal: false,
+      shape: [2],
+      dtype: "float32",
+      size: 2,
+      strides: [],
+      dataId: {
+        id: 2810,
+      },
+      id: 2530,
+      rankType: "1",
+      scopeId: 4605,
+    },
+    landmarks: {
+      kept: false,
+      isDisposedInternal: false,
+      shape: [6, 2],
+      dtype: "float32",
+      size: 12,
+      strides: [2],
+      dataId: {
+        id: 2812,
+      },
+      id: 2532,
+      rankType: "2",
+      scopeId: 4607,
+    },
+    probability: {
+      kept: false,
+      isDisposedInternal: false,
+      shape: [1],
+      dtype: "float32",
+      size: 1,
+      strides: [],
+      dataId: {
+        id: 2803,
+      },
+      id: 2522,
+      rankType: "1",
+      scopeId: 4586,
+    },
+  },
+];
 
 const tempt = [
   {
