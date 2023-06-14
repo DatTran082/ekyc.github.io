@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./styles/style.css">
+    <title>Face Detection</title>
+  </head>
+
+  <body>
+    <h1>Face Detection quay mặt từ phải qua trái
+
+      <div id="timer">00:05</div>
+    </h1>
+    <!-- <video id="video" autoplay style="display: none"></video> -->
+
+    <!-- camera -->
+    <div class="body">
+      <video class="video" autoplay muted playsinline id="videoLive"></video>
+      <video autoplay playsinline style="display: none" controls
+        id="videoRecorded"></video>
+      <canvas id="canvas" class="canvas" width="600px" height="400px"></canvas>
+      <!-- <canvas id="canvas" class="canvas" width="600px" height="400px"></canvas> -->
+    </div>
+    <div>
+      <!-- <button type="button" id="buttonStart">Start</button>
+      <button type="button" id="buttonStop" disabled>Stop</button> -->
+    </div>
+    <div>
+    </div>
+    <!-- camera -->
+
+  </body>
+
+  <!-- <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface"></script> -->
+
+  <script src="./models/jsdelivr.net_npm_@tensorflow_tfjs"></script>
+  <script src="./models/jsdelivr.net_npm_@tensorflow-models_blazeface"></script>
+  <script src="./scripts/camera.js"></script>
+  <!-- <script src="./scripts/script.js"></script> -->
+</html>
