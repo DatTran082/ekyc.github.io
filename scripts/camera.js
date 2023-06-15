@@ -13,6 +13,7 @@ const cameras = {
     "leftEarTragion",
   ],
   loader: null,
+  confirm: null,
   faceVerify: false,
   mediaRecorder: null,
   timerInterval: null,
@@ -29,6 +30,7 @@ const cameras = {
   init: async function () {
     cameras.videoLive = document.querySelector("#videoLive");
     cameras.loader = document.querySelector("#loader");
+    cameras.confirm = document.querySelector("#confirm");
     cameras.videoRecorded = document.querySelector("#videoRecorded");
     cameras._timer = document.querySelector("#timer");
     cameras._message = document.querySelector("#message");
@@ -67,6 +69,7 @@ const cameras = {
         cameras.canvas.style = "display:none";
         cameras.loader.style = "display:none";
         cameras.videoRecorded.style = "display:block";
+        cameras.confirm.style = "display:block";
       }
     });
   },
@@ -297,11 +300,11 @@ const cameras = {
     clearInterval(cameras.timerInterval);
   },
   stop: function () {
+    clearInterval(cameras.timerInterval);
+    clearInterval(cameras.faceRunsInterval);
     cameras.mediaRecorder.stop();
     cameras.isRecording = false;
 
-    clearInterval(cameras.timerInterval);
-    clearInterval(cameras.faceRunsInterval);
     cameras.stream.getTracks().forEach(function (track) {
       track.stop();
     });
