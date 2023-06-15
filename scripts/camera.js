@@ -4,6 +4,15 @@ const RED = "#FF2C35";
 const BLUE = "#157AB3";
 
 const cameras = {
+  label: [
+    "rightEye",
+    "leftEye",
+    "noseTip",
+    "mouthCenter",
+    "rightEarTragion",
+    "leftEarTragion",
+  ],
+  loader: null,
   faceVerify: false,
   mediaRecorder: null,
   timerInterval: null,
@@ -19,6 +28,7 @@ const cameras = {
   faceRunsInterval: null,
   init: async function () {
     cameras.videoLive = document.querySelector("#videoLive");
+    cameras.loader = document.querySelector("#loader");
     cameras.videoRecorded = document.querySelector("#videoRecorded");
     cameras._timer = document.querySelector("#timer");
     cameras._message = document.querySelector("#message");
@@ -35,6 +45,7 @@ const cameras = {
 
     if (!MediaRecorder.isTypeSupported("video/webm")) {
       console.warn("video/webm is not supported");
+      this._message.textContent = "MediaRecorder is not supported";
     }
 
     cameras.mediaRecorder = new MediaRecorder(cameras.stream, {
@@ -54,6 +65,7 @@ const cameras = {
         cameras.videoRecorded.src = URL.createObjectURL(event.data); // <6>
         cameras.videoLive.style = "display:none";
         cameras.canvas.style = "display:none";
+        cameras.loader.style = "display:none";
         cameras.videoRecorded.style = "display:block";
       }
     });
@@ -63,7 +75,6 @@ const cameras = {
     try {
       if (prediction.length > 1) {
         cameras.reset();
-        this._timer.textContent = "recording: -_-";
         this._message.textContent = "chỉ cho phép 1 khuôn mặt trong khung hình";
       } else if (prediction[0].landmarks.length == 6) {
         const faceMattrix = prediction[0].landmarks;
@@ -77,58 +88,58 @@ const cameras = {
         // } else
 
         if (
-          prediction[0].topLeft[0] < 30 ||
-          prediction[0].topLeft[0] > 290 ||
-          prediction[0].topLeft[1] < 0 ||
-          prediction[0].topLeft[1] > 250
+          prediction[0].topLeft[0] < 30 || //x->
+          prediction[0].topLeft[0] > 290 || //x<-
+          prediction[0].topLeft[1] < 0 || //y->
+          prediction[0].topLeft[1] > 250 //y-<
         ) {
-          this._timer.textContent = "recording: -_-";
           this._message.textContent = "Giữ cho khuôn mặt ở chính giữa màn hình";
           cameras.reset();
         } else if (probability < 0.995) {
-          this._timer.textContent = "recording: -_-";
-          this._message.textContent = "vui lòng giữ khuôn mặt không bị che";
+          //check percentage output
+          this._message.textContent =
+            "vui lòng giữ khuôn mặt cách màn hình khoảng 30cm và không bị che";
           cameras.reset();
         } else {
           this._message.textContent = "";
-
           cameras.start();
         }
 
+        //#region detect loger
         console.table([
           [
-            "left eye",
-            `X: ${Math.round(faceMattrix[0][0])} | Y: ${Math.round(
+            cameras.label[0],
+            `X:${Math.round(faceMattrix[0][0])} | Y:${Math.round(
               faceMattrix[0][1]
             )}`,
           ],
           [
-            "right eye",
-            `X: ${Math.round(faceMattrix[1][0])} | Y: ${Math.round(
+            cameras.label[1],
+            `X:${Math.round(faceMattrix[1][0])} | Y:${Math.round(
               faceMattrix[1][1]
             )}`,
           ],
           [
-            "nose",
-            `X: ${Math.round(faceMattrix[2][0])} | Y: ${Math.round(
+            cameras.label[2],
+            `X:${Math.round(faceMattrix[2][0])} | Y:${Math.round(
               faceMattrix[2][1]
             )}`,
           ],
           [
-            "left ear",
-            `X: ${Math.round(faceMattrix[3][0])} | Y: ${Math.round(
+            cameras.label[3],
+            `X:${Math.round(faceMattrix[3][0])} | Y:${Math.round(
               faceMattrix[3][1]
             )}`,
           ],
           [
-            "right ear",
-            `X: ${Math.round(faceMattrix[4][0])} | Y: ${Math.round(
+            cameras.label[4],
+            `X:${Math.round(faceMattrix[4][0])} | Y:${Math.round(
               faceMattrix[4][1]
             )}`,
           ],
           [
-            "mouth",
-            `X: ${Math.round(faceMattrix[5][0])} | Y: ${Math.round(
+            cameras.label[5],
+            `X:${Math.round(faceMattrix[5][0])} | Y:${Math.round(
               faceMattrix[5][1]
             )}`,
           ],
@@ -138,23 +149,20 @@ const cameras = {
           ["HEIGHT", HEIGHT],
           ["PROBABILITY", probability],
         ]);
+        //#endregion
       }
     } catch (error) {
       cameras.reset();
-      this._timer.textContent = "recording: -_-";
       this._message.textContent = "không tìm thấy khuôn mặt trong khung hình";
     }
-    // cameras.canvas.width = cameras.videoLive.width;
-    // cameras.canvas.height = cameras.videoLive.height;
-    // ctx.scale(-1, 1);
 
     ctx.drawImage(cameras.videoLive, 0, 0, 650, 480);
     prediction.forEach((pred) => {
       // draw the rectangle enclosing the face
+      ctx.strokeStyle = GREEN;
       if (boundingBox) {
         ctx.beginPath();
         ctx.lineWidth = "1";
-        ctx.strokeStyle = RED;
 
         ctx.rect(
           pred.topLeft[0],
@@ -167,11 +175,73 @@ const cameras = {
 
       if (showKeypoints) {
         // drawing small rectangles for the face landmarks
-        ctx.fillStyle = GREEN;
-
+        ctx.fillStyle = RED;
+        // ctx.fillStyle = RED;
+        //detect 6 point of face
         pred.landmarks.forEach((landmark) => {
-          ctx.fillRect(landmark[0], landmark[1], 5, 5);
+          ctx.fillRect(landmark[0], landmark[1], 4, 4);
         });
+
+        const eye = {
+          left: {
+            x: pred.landmarks[1][0],
+            y: pred.landmarks[1][1],
+          },
+          right: {
+            x: pred.landmarks[0][0],
+            y: pred.landmarks[0][1],
+          },
+        };
+        const nose = {
+          x: pred.landmarks[2][0],
+          y: pred.landmarks[2][1],
+        };
+        const mouth = {
+          x: pred.landmarks[3][0],
+          y: pred.landmarks[3][1],
+        };
+        const ear = {
+          left: {
+            x: pred.landmarks[5][0],
+            y: pred.landmarks[5][1],
+          },
+          right: {
+            x: pred.landmarks[4][0],
+            y: pred.landmarks[4][1],
+          },
+        };
+        // draw a red line
+        // ctx.strokeStyle = GREEN;
+        // ctx.lineWidth = 5;
+
+        //#region parabol tu tai trai -20 -> midpoint -> tai phai
+        const ear_extendlength = 20;
+        ctx.moveTo(ear.left.x + ear_extendlength, ear.left.y);
+        ctx.quadraticCurveTo(
+          nose.x,
+          nose.y - 60,
+          ear.right.x - ear_extendlength,
+          ear.right.y
+        );
+        //#endregion
+
+        //tinh toa do trung diem cua 2 point
+        function midpoint([x1, y1], [x2, y2]) {
+          return {
+            x: (x1 + x2) / 2,
+            y: (y1 + y2) / 2,
+          };
+        }
+        //#region parabol tu mom -> mui -> midpoint -40
+        const midpoint_etendlength = 90;
+        const midpoint_eye = midpoint(
+          [eye.left.x, eye.left.y],
+          [eye.right.x, eye.right.y]
+        );
+        ctx.moveTo(midpoint_eye.x, midpoint_eye.y - midpoint_etendlength);
+        ctx.quadraticCurveTo(nose.x, nose.y, mouth.x, mouth.y + 60);
+        //#endregion
+        ctx.stroke();
       }
     });
   },
@@ -206,6 +276,7 @@ const cameras = {
   start: function () {
     this.videoRecorded.style = "display:none";
     this.videoLive.style = "display:block";
+    cameras.loader.style = "display:block";
     this.faceVerify = false;
     if (cameras.isRecording === false) {
       this.mediaRecorder.start();
@@ -215,8 +286,10 @@ const cameras = {
     }
   },
   reset: function () {
+    this._timer.textContent = "recording: -_-";
     this.videoRecorded.style = "display:none";
     this.videoLive.style = "display:block";
+    // cameras.loader.style = "display:block";
     this.faceVerify = false;
 
     cameras.mediaRecorder.stop();

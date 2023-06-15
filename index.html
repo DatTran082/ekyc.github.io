@@ -9,27 +9,30 @@
   </head>
 
   <body>
-    <h1>quay mặt từ phải qua trái
+    <h3>quay mặt theo hướng từ trái qua phải
       <div id="timer">recording: 00:05</div>
       <div id="message"></div>
-    </h1>
+    </h3>
     <!-- <video id="video" autoplay style="display: none"></video> -->
 
     <!-- camera -->
     <div class="body">
       <video class="video" autoplay muted playsinline id="videoLive"
         width="650px" height="480px"></video>
-      <video class="preview" width="660px" height="480px" controls autoplay
+      <video class="preview" width="660px" height="480px" autoplay controls
         playsinline style="display: none"
         id="videoRecorded"></video>
+      <div id="loader" class="loader" style="display: none;"></div>
       <canvas id="canvas" class="canvas" width="650px" height="480px"></canvas>
       <!-- <canvas id="canvas" class="canvas" width="600px" height="400px"></canvas> -->
     </div>
     <div>
+      <!-- <button type="button" id="confirm">Ký hợp đồng</button> -->
       <!-- <button type="button" id="buttonStart">Start</button>
       <button type="button" id="buttonStop" disabled>Stop</button> -->
     </div>
     <div>
+      <button type="button" id="confirm">Ký hợp đồng</button>
     </div>
     <!-- camera -->
 
