@@ -45,39 +45,16 @@ const cameras = {
   },
   handleEvent: async function () {
     try {
-      async function setupCamera() {
-        // Request the front-facing camera of the device
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: false,
-          video: {
-            facingMode: "user",
-            // height: { ideal: 350 },
-            // width: { ideal: 350 },
-          },
-        });
+      cameras.stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+        audio: false,
+      });
 
-        cameras.stream = stream;
+      cameras.videoLive.srcObject = cameras.stream;
 
-        cameras.videoLive.srcObject = stream;
-
-        // Handle the video stream once it loads.
-        return new Promise((resolve) => {
-          cameras.videoLive.onloadedmetadata = () => {
-            resolve(cameras.videoLive);
-          };
-        });
-      }
-
-      await setupCamera();
-
-      cameras.faceRunsInterval = setInterval(cameras.detectFaces, 100);
-
-      // cameras.stream = await navigator.mediaDevices.getUserMedia({
-      //   video: true,
-      //   audio: false,
-      // });
-
-      // cameras.videoLive.srcObject = cameras.stream;
+      cameras.videoLive.onloadedmetadata = () => {
+        cameras.faceRunsInterval = setInterval(cameras.detectFaces, 100);
+      };
 
       if (!MediaRecorder.isTypeSupported("video/webm")) {
         console.warn("video/webm is not supported");
