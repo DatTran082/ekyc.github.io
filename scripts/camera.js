@@ -50,9 +50,16 @@ const cameras = {
       cameras.videoLive.srcObject = stream;
       cameras.stream = stream;
 
+      cameras.videoLive.addEventListener("loadeddata", async () => {
+        // if (cameras.faceRunsInterval) {
+        //   clearInterval(cameras.faceRunsInterval);
+        // }
+        cameras.faceRunsInterval = setInterval(cameras.detectFaces, 100);
+      });
+
       cameras.handleEvent();
     } catch (error) {
-      console.log("init camera failure: ", error);
+      console.log("init camera stream failure: ", error);
     }
   },
   handleEvent: async function () {
@@ -64,14 +71,6 @@ const cameras = {
 
       cameras.mediaRecorder = new MediaRecorder(cameras.stream, {
         mimeType: "video/webm",
-      });
-
-      cameras.videoLive.addEventListener("loadeddata", async () => {
-        console.log("state camera: ", cameras.mediaRecorder.state);
-        // if (cameras.faceRunsInterval) {
-        //   clearInterval(cameras.faceRunsInterval);
-        // }
-        cameras.faceRunsInterval = setInterval(cameras.detectFaces, 100);
       });
 
       cameras.mediaRecorder.addEventListener("dataavailable", (event) => {
