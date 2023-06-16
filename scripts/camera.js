@@ -37,43 +37,44 @@ const cameras = {
 
     try {
       cameras.model = await blazeface.load();
-      cameras.handleEvent();
     } catch (error) {
       console.log("init faceDetection failure: ", error);
     }
-  },
-  handleEvent: async function () {
-    cameras.stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" },
-      audio: false,
-    });
-
-    cameras.videoLive.srcObject = cameras.stream;
-
-    if (!MediaRecorder.isTypeSupported("video/webm")) {
-      console.warn("video/webm is not supported");
-      this._message.textContent = "MediaRecorder is not supported";
-    }
-
-    cameras.mediaRecorder = new MediaRecorder(cameras.stream, {
-      mimeType: "video/webm",
-    });
-
-    // cameras.videoLive.addEventListener("loadeddata", async () => {
-    //   console.log("state camera: ", cameras.mediaRecorder.state);
-    //   cameras.faceRunsInterval = setInterval(cameras.detectFaces, 100);
-    // });
 
     try {
-      cameras.videoLive.onloadedmetadata = () => {
-        if (cameras.faceRunsInterval) {
-          clearInterval(cameras.faceRunsInterval);
-        }
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { facingMode: "user" },
+      });
 
+      cameras.videoLive.srcObject = stream;
+      cameras.stream = stream;
+
+      cameras.handleEvent();
+    } catch (error) {
+      console.log("init camera failure: ", error);
+    }
+  },
+  handleEvent: async function () {
+    try {
+      if (!MediaRecorder.isTypeSupported("video/webm")) {
+        console.warn("video/webm is not supported");
+        this._message.textContent = "MediaRecorder is not supported";
+      }
+
+      cameras.mediaRecorder = new MediaRecorder(cameras.stream, {
+        mimeType: "video/webm",
+      });
+
+      cameras.videoLive.addEventListener("loadeddata", async () => {
+        console.log("state camera: ", cameras.mediaRecorder.state);
+        // if (cameras.faceRunsInterval) {
+        //   clearInterval(cameras.faceRunsInterval);
+        // }
         cameras.faceRunsInterval = setInterval(cameras.detectFaces, 100);
-      };
+      });
 
-      cameras.mediaRecorder.ondataavailable(function (event) {
+      cameras.mediaRecorder.addEventListener("dataavailable", (event) => {
         if (cameras.faceVerify == true) {
           cameras.videoRecorded.src = URL.createObjectURL(event.data); // <6>
           cameras.videoLive.style = "display:none";
