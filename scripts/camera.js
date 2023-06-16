@@ -1,9 +1,7 @@
-const NUM_KEYPOINTS = 6;
-const GREEN = "#32EEDB";
-const RED = "#FF2C35";
-const BLUE = "#157AB3";
-
 const cameras = {
+  GREEN: "#32EEDB",
+  RED: "#FF2C35",
+  BLUE: "#157AB3",
   label: [
     "rightEye",
     "leftEye",
@@ -37,41 +35,50 @@ const cameras = {
     cameras.canvas = document.getElementById("canvas");
     cameras.ctx = cameras.canvas.getContext("2d");
 
-    cameras.model = model = await blazeface.load();
-    cameras.stream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: false,
-    });
-
-    cameras.videoLive.srcObject = cameras.stream;
-
-    if (!MediaRecorder.isTypeSupported("video/webm")) {
-      console.warn("video/webm is not supported");
-      this._message.textContent = "MediaRecorder is not supported";
+    try {
+      cameras.model = model = await blazeface.load();
+    } catch (error) {
+      console.log("init faceDetection failure: ", error);
     }
-
-    cameras.mediaRecorder = new MediaRecorder(cameras.stream, {
-      mimeType: "video/webm",
-    });
 
     cameras.handleEvent();
   },
-  handleEvent: function () {
-    this.videoLive.addEventListener("loadeddata", async () => {
-      console.log("state camera: ", cameras.mediaRecorder.state);
-      cameras.faceRunsInterval = setInterval(cameras.detectFaces, 100);
-    });
+  handleEvent: async function () {
+    try {
+      cameras.stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: false,
+      });
 
-    this.mediaRecorder.addEventListener("dataavailable", (event) => {
-      if (cameras.faceVerify == true) {
-        cameras.videoRecorded.src = URL.createObjectURL(event.data); // <6>
-        cameras.videoLive.style = "display:none";
-        cameras.canvas.style = "display:none";
-        cameras.loader.style = "display:none";
-        cameras.videoRecorded.style = "display:block";
-        cameras.confirm.style = "display:block";
+      cameras.videoLive.srcObject = cameras.stream;
+      if (!MediaRecorder.isTypeSupported("video/webm")) {
+        console.warn("video/webm is not supported");
+        this._message.textContent = "MediaRecorder is not supported";
       }
-    });
+
+      cameras.mediaRecorder = new MediaRecorder(cameras.stream, {
+        mimeType: "video/webm",
+      });
+
+      cameras.videoLive.addEventListener("loadeddata", async () => {
+        console.log("state camera: ", cameras.mediaRecorder.state);
+        cameras.faceRunsInterval = setInterval(cameras.detectFaces, 100);
+      });
+
+      cameras.mediaRecorder.addEventListener("dataavailable", (event) => {
+        if (cameras.faceVerify == true) {
+          cameras.videoRecorded.src = URL.createObjectURL(event.data); // <6>
+          cameras.videoLive.style = "display:none";
+          cameras.canvas.style = "display:none";
+          cameras.loader.style = "display:none";
+          cameras.videoRecorded.style = "display:block";
+          cameras.confirm.style = "display:block";
+        }
+      });
+    } catch (error) {
+      this._message.textContent = "MediaRecorder is not supported";
+      console.log(error);
+    }
   },
   drawResults: function (ctx, prediction, boundingBox, showKeypoints) {
     // console.log(prediction);
@@ -109,49 +116,49 @@ const cameras = {
         }
 
         //#region detect loger
-        console.table([
-          [
-            cameras.label[0],
-            `X:${Math.round(faceMattrix[0][0])} | Y:${Math.round(
-              faceMattrix[0][1]
-            )}`,
-          ],
-          [
-            cameras.label[1],
-            `X:${Math.round(faceMattrix[1][0])} | Y:${Math.round(
-              faceMattrix[1][1]
-            )}`,
-          ],
-          [
-            cameras.label[2],
-            `X:${Math.round(faceMattrix[2][0])} | Y:${Math.round(
-              faceMattrix[2][1]
-            )}`,
-          ],
-          [
-            cameras.label[3],
-            `X:${Math.round(faceMattrix[3][0])} | Y:${Math.round(
-              faceMattrix[3][1]
-            )}`,
-          ],
-          [
-            cameras.label[4],
-            `X:${Math.round(faceMattrix[4][0])} | Y:${Math.round(
-              faceMattrix[4][1]
-            )}`,
-          ],
-          [
-            cameras.label[5],
-            `X:${Math.round(faceMattrix[5][0])} | Y:${Math.round(
-              faceMattrix[5][1]
-            )}`,
-          ],
-          ["X", prediction[0].topLeft[0]],
-          ["Y", prediction[0].topLeft[1]],
-          ["WIDTH", WIDTH],
-          ["HEIGHT", HEIGHT],
-          ["PROBABILITY", probability],
-        ]);
+        // console.table([
+        //   [
+        //     cameras.label[0],
+        //     `X:${Math.round(faceMattrix[0][0])} | Y:${Math.round(
+        //       faceMattrix[0][1]
+        //     )}`,
+        //   ],
+        //   [
+        //     cameras.label[1],
+        //     `X:${Math.round(faceMattrix[1][0])} | Y:${Math.round(
+        //       faceMattrix[1][1]
+        //     )}`,
+        //   ],
+        //   [
+        //     cameras.label[2],
+        //     `X:${Math.round(faceMattrix[2][0])} | Y:${Math.round(
+        //       faceMattrix[2][1]
+        //     )}`,
+        //   ],
+        //   [
+        //     cameras.label[3],
+        //     `X:${Math.round(faceMattrix[3][0])} | Y:${Math.round(
+        //       faceMattrix[3][1]
+        //     )}`,
+        //   ],
+        //   [
+        //     cameras.label[4],
+        //     `X:${Math.round(faceMattrix[4][0])} | Y:${Math.round(
+        //       faceMattrix[4][1]
+        //     )}`,
+        //   ],
+        //   [
+        //     cameras.label[5],
+        //     `X:${Math.round(faceMattrix[5][0])} | Y:${Math.round(
+        //       faceMattrix[5][1]
+        //     )}`,
+        //   ],
+        //   ["X", prediction[0].topLeft[0]],
+        //   ["Y", prediction[0].topLeft[1]],
+        //   ["WIDTH", WIDTH],
+        //   ["HEIGHT", HEIGHT],
+        //   ["PROBABILITY", probability],
+        // ]);
         //#endregion
       }
     } catch (error) {
@@ -162,7 +169,7 @@ const cameras = {
     ctx.drawImage(cameras.videoLive, 0, 0, 650, 480);
     prediction.forEach((pred) => {
       // draw the rectangle enclosing the face
-      ctx.strokeStyle = GREEN;
+      ctx.strokeStyle = cameras.GREEN;
       if (boundingBox) {
         ctx.beginPath();
         ctx.lineWidth = "1";
@@ -178,7 +185,7 @@ const cameras = {
 
       if (showKeypoints) {
         // drawing small rectangles for the face landmarks
-        ctx.fillStyle = RED;
+        ctx.fillStyle = cameras.RED;
         // ctx.fillStyle = RED;
         //detect 6 point of face
         pred.landmarks.forEach((landmark) => {
@@ -313,19 +320,3 @@ const cameras = {
 };
 
 cameras.init();
-
-const tempt = [
-  {
-    topLeft: [184.4397735595703, 122.96421813964844],
-    bottomRight: [456.9659423828125, 327.3579406738281],
-    landmarks: [
-      [270.2274280786514, 176.69438481330872],
-      [372.32213020324707, 182.99121916294098],
-      [317.38202810287476, 232.47283816337585],
-      [312.9612874984741, 272.9273557662964],
-      [219.18052673339844, 189.79238390922546],
-      [423.1648349761963, 203.6924010515213],
-    ],
-    probability: [0.99959796667099],
-  },
-];

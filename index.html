@@ -13,9 +13,7 @@
       <div id="timer">recording: 00:05</div>
       <div id="message"></div>
     </h3>
-    <!-- <video id="video" autoplay style="display: none"></video> -->
 
-    <!-- camera -->
     <div class="body">
       <video class="video" autoplay muted playsinline id="videoLive"
         width="650px" height="480px"></video>
@@ -24,25 +22,22 @@
         id="videoRecorded"></video>
       <div id="loader" class="loader" style="display: none;"></div>
       <canvas id="canvas" class="canvas" width="650px" height="480px"></canvas>
-      <!-- <canvas id="canvas" class="canvas" width="600px" height="400px"></canvas> -->
-    </div>
-    <div>
-      <!-- <button type="button" id="confirm">Ký hợp đồng</button> -->
-      <!-- <button type="button" id="buttonStart">Start</button>
-      <button type="button" id="buttonStop" disabled>Stop</button> -->
     </div>
     <div>
       <button type="button" id="confirm">Xác nhận</button>
     </div>
-    <!-- camera -->
 
   </body>
   <!-- 
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface"></script> -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface"></script>
+  -->
 
   <script src="./models/jsdelivr.net_npm_@tensorflow_tfjs"></script>
   <script src="./models/jsdelivr.net_npm_@tensorflow-models_blazeface"></script>
   <script src="./scripts/camera.js"></script>
-  <!-- <script src="./scripts/script.js"></script> -->
+
+  <script type="text/javascript">
+    InitScreen('Cameras');
+</script>
 </html>
