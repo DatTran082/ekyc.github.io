@@ -359,6 +359,7 @@ const cameras = {
   stop: function () {
     clearInterval(cameras.timerInterval);
     clearInterval(cameras.faceRunsInterval);
+    cameras.mediaRecorder.stop();
 
     setTimeout(() => {
       cameras.stream.getTracks().forEach(function (track) {
@@ -366,7 +367,6 @@ const cameras = {
       });
     }, 500);
 
-    cameras.mediaRecorder.stop();
     cameras.isRecording = false;
     cameras.faceVerify = true;
   },
