@@ -123,54 +123,54 @@ const cameras = {
             "vui lòng giữ khuôn mặt cách màn hình khoảng 30cm và không bị che";
           cameras.reset();
         } else {
-          this._message.textContent = this._timer.textContent + "s";
+          this._message.textContent = "...";
           cameras.start();
         }
 
         //#region detect loger
-        console.table([
-          [
-            cameras.label[0],
-            `X:${Math.round(faceMattrix[0][0])} | Y:${Math.round(
-              faceMattrix[0][1]
-            )}`,
-          ],
-          [
-            cameras.label[1],
-            `X:${Math.round(faceMattrix[1][0])} | Y:${Math.round(
-              faceMattrix[1][1]
-            )}`,
-          ],
-          [
-            cameras.label[2],
-            `X:${Math.round(faceMattrix[2][0])} | Y:${Math.round(
-              faceMattrix[2][1]
-            )}`,
-          ],
-          [
-            cameras.label[3],
-            `X:${Math.round(faceMattrix[3][0])} | Y:${Math.round(
-              faceMattrix[3][1]
-            )}`,
-          ],
-          [
-            cameras.label[4],
-            `X:${Math.round(faceMattrix[4][0])} | Y:${Math.round(
-              faceMattrix[4][1]
-            )}`,
-          ],
-          [
-            cameras.label[5],
-            `X:${Math.round(faceMattrix[5][0])} | Y:${Math.round(
-              faceMattrix[5][1]
-            )}`,
-          ],
-          ["X", prediction[0].topLeft[0]],
-          ["Y", prediction[0].topLeft[1]],
-          ["WIDTH", WIDTH],
-          ["HEIGHT", HEIGHT],
-          ["PROBABILITY", probability],
-        ]);
+        // console.table([
+        //   [
+        //     cameras.label[0],
+        //     `X:${Math.round(faceMattrix[0][0])} | Y:${Math.round(
+        //       faceMattrix[0][1]
+        //     )}`,
+        //   ],
+        //   [
+        //     cameras.label[1],
+        //     `X:${Math.round(faceMattrix[1][0])} | Y:${Math.round(
+        //       faceMattrix[1][1]
+        //     )}`,
+        //   ],
+        //   [
+        //     cameras.label[2],
+        //     `X:${Math.round(faceMattrix[2][0])} | Y:${Math.round(
+        //       faceMattrix[2][1]
+        //     )}`,
+        //   ],
+        //   [
+        //     cameras.label[3],
+        //     `X:${Math.round(faceMattrix[3][0])} | Y:${Math.round(
+        //       faceMattrix[3][1]
+        //     )}`,
+        //   ],
+        //   [
+        //     cameras.label[4],
+        //     `X:${Math.round(faceMattrix[4][0])} | Y:${Math.round(
+        //       faceMattrix[4][1]
+        //     )}`,
+        //   ],
+        //   [
+        //     cameras.label[5],
+        //     `X:${Math.round(faceMattrix[5][0])} | Y:${Math.round(
+        //       faceMattrix[5][1]
+        //     )}`,
+        //   ],
+        //   ["X", prediction[0].topLeft[0]],
+        //   ["Y", prediction[0].topLeft[1]],
+        //   ["WIDTH", WIDTH],
+        //   ["HEIGHT", HEIGHT],
+        //   ["PROBABILITY", probability],
+        // ]);
         // #endregion
 
         ctx.drawImage(cameras.videoLive, 0, 0, 650, 480);
@@ -269,18 +269,16 @@ const cameras = {
     }
   },
   detectFaces: async function () {
-    if (cameras.model) {
-      const estimationConfig = { flipHorizontal: true };
+    try {
+      // const estimationConfig = { flipHorizontal: true };
       const prediction = await cameras.model.estimateFaces(
         cameras.videoLive,
         false
       );
 
-      // console.log(prediction);
-
       cameras.drawResults(cameras.ctx, prediction, true, true);
-    } else {
-      console.log("model not found");
+    } catch (error) {
+      console.log("model not found: ", error);
       // clearInterval(cameras.faceRunsInterval);
     }
   },
@@ -327,20 +325,18 @@ const cameras = {
     cameras.isRecording = false;
     clearInterval(cameras.timerInterval);
   },
-  stop: async function () {
-    await clearInterval(cameras.timerInterval);
-    await clearInterval(cameras.faceRunsInterval);
+  stop: function () {
+    clearInterval(cameras.timerInterval);
+    clearInterval(cameras.faceRunsInterval);
     cameras.mediaRecorder.stop();
 
-    await setTimeout(() => {
-      cameras.stream.getTracks().forEach(function (track) {
-        track.stop();
-      });
-    }, 500);
+    setTimeout(function () {
+      // cameras.stream.getTracks().forEach(function (track) {
+      //   track.stop();
+      // });
+    }, 100);
 
     cameras.isRecording = false;
     cameras.faceVerify = true;
   },
 };
-
-cameras.init();

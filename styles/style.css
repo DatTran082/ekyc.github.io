@@ -14,10 +14,6 @@
 }
 
 
-/* video {
-    opacity: 0;
-  } */
-
 
 .video,
 .canvas {
@@ -56,25 +52,6 @@
     z-index: 99;
 }
 
-.loader {
-    display: block;
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    min-width: 300px;
-    min-height: 300px;
-    height: 350px;
-    width: 350px;
-    margin: auto;
-    border-radius: 50%;
-    border: 4px solid transparent;
-    border-top-color: #5898fff0;
-    border-radius: 50%;
-    animation: spin 5s linear infinite;
-    z-index: 999;
-}
 
 #confirm {
     display: none;
@@ -90,15 +67,4 @@
     margin: 12.5px;
     border: none;
 
-}
-
-
-@keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-
-    to {
-        transform: rotate(360deg);
-    }
 }
