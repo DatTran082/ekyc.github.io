@@ -332,7 +332,7 @@ const cameras = {
     await clearInterval(cameras.faceRunsInterval);
     cameras.mediaRecorder.stop();
 
-    setTimeout(() => {
+    await setTimeout(() => {
       cameras.stream.getTracks().forEach(function (track) {
         track.stop();
       });
