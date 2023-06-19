@@ -37,6 +37,7 @@ const cameras = {
 
     try {
       cameras.model = await blazeface.load();
+      console.log("model loaded: ", cameras.model);
     } catch (error) {
       console.log("init faceDetection failure: ", error);
     }
@@ -264,15 +265,20 @@ const cameras = {
     });
   },
   detectFaces: async function () {
-    const estimationConfig = { flipHorizontal: true };
-    const prediction = await cameras.model.estimateFaces(
-      cameras.videoLive,
-      false
-    );
+    if (cameras.model) {
+      const estimationConfig = { flipHorizontal: true };
+      const prediction = await cameras.model.estimateFaces(
+        cameras.videoLive,
+        false
+      );
 
-    // console.log(prediction);
+      // console.log(prediction);
 
-    cameras.drawResults(cameras.ctx, prediction, true, true);
+      cameras.drawResults(cameras.ctx, prediction, true, true);
+    } else {
+      console.log("model not found");
+      clearInterval(cameras.faceRunsInterval);
+    }
   },
   startTimer: function (duration, display) {
     let timer = duration;
