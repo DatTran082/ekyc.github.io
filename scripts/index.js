@@ -111,7 +111,7 @@ const cameras = {
             "vui lòng giữ khuôn mặt cách màn hình khoảng 30cm và không bị che";
           this.reset();
         } else {
-          this._message.textContent = "...";
+          this._message.textContent = "^_^";
           this.start();
         }
 
