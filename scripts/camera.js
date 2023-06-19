@@ -42,7 +42,7 @@ const cameras = {
       //   "https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface"
       // );
 
-      console.log("model loaded: ", cameras.model);
+      // console.log("model loaded: ", cameras.model);
     } catch (error) {
       console.log("init faceDetection failure: ", error);
     }
@@ -60,7 +60,7 @@ const cameras = {
         // if (cameras.faceRunsInterval) {
         //   clearInterval(cameras.faceRunsInterval);
         // }
-        cameras.faceRunsInterval = setInterval(cameras.detectFaces, 50);
+        cameras.faceRunsInterval = setInterval(cameras.detectFaces, 100);
       });
 
       cameras.handleEvent();
@@ -123,7 +123,12 @@ const cameras = {
       if (prediction.length > 1) {
         cameras.reset();
         this._message.textContent = "chỉ cho phép 1 khuôn mặt trong khung hình";
-      } else if (prediction[0].landmarks.length == 6) {
+      }
+      // else if (prediction.length == 0) {
+      //   cameras.reset();
+      //   this._message.textContent = "không tìm thấy khuôn mặt trong khung hình";
+      // }
+      else if (prediction[0].landmarks.length == 6) {
         const faceMattrix = prediction[0].landmarks;
         const probability = prediction[0].probability[0];
         const WIDTH = prediction[0].bottomRight[0] - prediction[0].topLeft[0];
@@ -354,12 +359,15 @@ const cameras = {
   stop: function () {
     clearInterval(cameras.timerInterval);
     clearInterval(cameras.faceRunsInterval);
+
+    setTimeout(() => {
+      cameras.stream.getTracks().forEach(function (track) {
+        track.stop();
+      });
+    }, 500);
+
     cameras.mediaRecorder.stop();
     cameras.isRecording = false;
-
-    cameras.stream.getTracks().forEach(function (track) {
-      track.stop();
-    });
     cameras.faceVerify = true;
   },
 };
