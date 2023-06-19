@@ -75,6 +75,29 @@ const cameras = {
         this._message.textContent = "MediaRecorder is not supported";
       }
 
+      // if (navigator.mediaDevices) {
+      //   console.log("getUserMedia supported.");
+
+      //   const constraints = { audio: false, video: { facingMode: "user" } };
+      //   const chunks = [];
+
+      //   navigator.mediaDevices
+      //     .getUserMedia(constraints)
+      //     .then((stream) => {
+      //       const options = {
+      //         audioBitsPerSecond: 128000,
+      //         videoBitsPerSecond: 2500000,
+      //         mimeType: "video/mp4",
+      //       };
+      //       const mediaRecorder = new MediaRecorder(stream, options);
+      //       m = mediaRecorder;
+      //       m.mimeType;
+      //     })
+      //     .catch((error) => {
+      //       console.error(error.message);
+      //     });
+      // }
+
       cameras.mediaRecorder = new MediaRecorder(cameras.stream, {
         mimeType: "video/webm",
       });
