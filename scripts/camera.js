@@ -356,12 +356,12 @@ const cameras = {
     cameras.isRecording = false;
     clearInterval(cameras.timerInterval);
   },
-  stop: function () {
-    clearInterval(cameras.timerInterval);
-    clearInterval(cameras.faceRunsInterval);
+  stop: async function () {
+    await clearInterval(cameras.timerInterval);
+    await clearInterval(cameras.faceRunsInterval);
     cameras.mediaRecorder.stop();
 
-    setTimeout(() => {
+    await setTimeout(() => {
       cameras.stream.getTracks().forEach(function (track) {
         track.stop();
       });
