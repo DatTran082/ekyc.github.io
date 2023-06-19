@@ -75,29 +75,6 @@ const cameras = {
         this._message.textContent = "MediaRecorder is not supported";
       }
 
-      // if (navigator.mediaDevices) {
-      //   console.log("getUserMedia supported.");
-
-      //   const constraints = { audio: false, video: { facingMode: "user" } };
-      //   const chunks = [];
-
-      //   navigator.mediaDevices
-      //     .getUserMedia(constraints)
-      //     .then((stream) => {
-      //       const options = {
-      //         audioBitsPerSecond: 128000,
-      //         videoBitsPerSecond: 2500000,
-      //         mimeType: "video/mp4",
-      //       };
-      //       const mediaRecorder = new MediaRecorder(stream, options);
-      //       m = mediaRecorder;
-      //       m.mimeType;
-      //     })
-      //     .catch((error) => {
-      //       console.error(error.message);
-      //     });
-      // }
-
       cameras.mediaRecorder = new MediaRecorder(cameras.stream, {
         mimeType: "video/webm",
       });
@@ -120,24 +97,17 @@ const cameras = {
   drawResults: function (ctx, prediction, boundingBox, showKeypoints) {
     // console.log(prediction);
     try {
-      if (prediction.length > 1) {
+      if (prediction == undefined || prediction.length == 0) {
+        cameras.reset();
+        this._message.textContent = "không tìm thấy khuôn mặt trong khung hình";
+      } else if (prediction.length > 1) {
         cameras.reset();
         this._message.textContent = "chỉ cho phép 1 khuôn mặt trong khung hình";
-      }
-      // else if (prediction.length == 0) {
-      //   cameras.reset();
-      //   this._message.textContent = "không tìm thấy khuôn mặt trong khung hình";
-      // }
-      else if (prediction[0].landmarks.length == 6) {
+      } else if (prediction[0].landmarks.length == 6) {
         const faceMattrix = prediction[0].landmarks;
         const probability = prediction[0].probability[0];
         const WIDTH = prediction[0].bottomRight[0] - prediction[0].topLeft[0];
         const HEIGHT = prediction[0].bottomRight[1] - prediction[0].topLeft[1];
-
-        // if (WIDTH <= 280 || HEIGHT <= 220) {
-        //   this._message.textContent =
-        //     "Giữ cho khuôn mặt cách màn hình khoảng 30cm";
-        // } else
 
         if (
           prediction[0].topLeft[0] < 30 || //x->
@@ -153,149 +123,150 @@ const cameras = {
             "vui lòng giữ khuôn mặt cách màn hình khoảng 30cm và không bị che";
           cameras.reset();
         } else {
-          this._message.textContent = "";
+          this._message.textContent = this._timer.textContent + "s";
           cameras.start();
         }
 
         //#region detect loger
-        // console.table([
-        //   [
-        //     cameras.label[0],
-        //     `X:${Math.round(faceMattrix[0][0])} | Y:${Math.round(
-        //       faceMattrix[0][1]
-        //     )}`,
-        //   ],
-        //   [
-        //     cameras.label[1],
-        //     `X:${Math.round(faceMattrix[1][0])} | Y:${Math.round(
-        //       faceMattrix[1][1]
-        //     )}`,
-        //   ],
-        //   [
-        //     cameras.label[2],
-        //     `X:${Math.round(faceMattrix[2][0])} | Y:${Math.round(
-        //       faceMattrix[2][1]
-        //     )}`,
-        //   ],
-        //   [
-        //     cameras.label[3],
-        //     `X:${Math.round(faceMattrix[3][0])} | Y:${Math.round(
-        //       faceMattrix[3][1]
-        //     )}`,
-        //   ],
-        //   [
-        //     cameras.label[4],
-        //     `X:${Math.round(faceMattrix[4][0])} | Y:${Math.round(
-        //       faceMattrix[4][1]
-        //     )}`,
-        //   ],
-        //   [
-        //     cameras.label[5],
-        //     `X:${Math.round(faceMattrix[5][0])} | Y:${Math.round(
-        //       faceMattrix[5][1]
-        //     )}`,
-        //   ],
-        //   ["X", prediction[0].topLeft[0]],
-        //   ["Y", prediction[0].topLeft[1]],
-        //   ["WIDTH", WIDTH],
-        //   ["HEIGHT", HEIGHT],
-        //   ["PROBABILITY", probability],
-        // ]);
-        //#endregion
+        console.table([
+          [
+            cameras.label[0],
+            `X:${Math.round(faceMattrix[0][0])} | Y:${Math.round(
+              faceMattrix[0][1]
+            )}`,
+          ],
+          [
+            cameras.label[1],
+            `X:${Math.round(faceMattrix[1][0])} | Y:${Math.round(
+              faceMattrix[1][1]
+            )}`,
+          ],
+          [
+            cameras.label[2],
+            `X:${Math.round(faceMattrix[2][0])} | Y:${Math.round(
+              faceMattrix[2][1]
+            )}`,
+          ],
+          [
+            cameras.label[3],
+            `X:${Math.round(faceMattrix[3][0])} | Y:${Math.round(
+              faceMattrix[3][1]
+            )}`,
+          ],
+          [
+            cameras.label[4],
+            `X:${Math.round(faceMattrix[4][0])} | Y:${Math.round(
+              faceMattrix[4][1]
+            )}`,
+          ],
+          [
+            cameras.label[5],
+            `X:${Math.round(faceMattrix[5][0])} | Y:${Math.round(
+              faceMattrix[5][1]
+            )}`,
+          ],
+          ["X", prediction[0].topLeft[0]],
+          ["Y", prediction[0].topLeft[1]],
+          ["WIDTH", WIDTH],
+          ["HEIGHT", HEIGHT],
+          ["PROBABILITY", probability],
+        ]);
+        // #endregion
+
+        ctx.drawImage(cameras.videoLive, 0, 0, 650, 480);
+        prediction.forEach((pred) => {
+          // draw the rectangle enclosing the face
+          ctx.strokeStyle = cameras.GREEN;
+          if (boundingBox) {
+            ctx.beginPath();
+            ctx.lineWidth = "1";
+
+            ctx.rect(
+              pred.topLeft[0],
+              pred.topLeft[1],
+              pred.bottomRight[0] - pred.topLeft[0],
+              pred.bottomRight[1] - pred.topLeft[1]
+            );
+            ctx.stroke();
+          }
+
+          if (showKeypoints) {
+            // drawing small rectangles for the face landmarks
+            ctx.fillStyle = cameras.RED;
+            // ctx.fillStyle = RED;
+            //detect 6 point of face
+            pred.landmarks.forEach((landmark) => {
+              ctx.fillRect(landmark[0], landmark[1], 4, 4);
+            });
+
+            // const eye = {
+            //   left: {
+            //     x: pred.landmarks[1][0],
+            //     y: pred.landmarks[1][1],
+            //   },
+            //   right: {
+            //     x: pred.landmarks[0][0],
+            //     y: pred.landmarks[0][1],
+            //   },
+            // };
+            // const nose = {
+            //   x: pred.landmarks[2][0],
+            //   y: pred.landmarks[2][1],
+            // };
+            // const mouth = {
+            //   x: pred.landmarks[3][0],
+            //   y: pred.landmarks[3][1],
+            // };
+            // const ear = {
+            //   left: {
+            //     x: pred.landmarks[5][0],
+            //     y: pred.landmarks[5][1],
+            //   },
+            //   right: {
+            //     x: pred.landmarks[4][0],
+            //     y: pred.landmarks[4][1],
+            //   },
+            // };
+            // // draw a red line
+            // // ctx.strokeStyle = GREEN;
+            // // ctx.lineWidth = 5;
+
+            // //#region parabol tu tai trai -20 -> midpoint -> tai phai
+            // const ear_extendlength = 20;
+            // ctx.moveTo(ear.left.x + ear_extendlength, ear.left.y);
+            // ctx.quadraticCurveTo(
+            //   nose.x,
+            //   nose.y - 60,
+            //   ear.right.x - ear_extendlength,
+            //   ear.right.y
+            // );
+            // //#endregion
+
+            // //tinh toa do trung diem cua 2 point
+            // function midpoint([x1, y1], [x2, y2]) {
+            //   return {
+            //     x: (x1 + x2) / 2,
+            //     y: (y1 + y2) / 2,
+            //   };
+            // }
+            // //#region parabol tu mom -> mui -> midpoint -40
+            // const midpoint_etendlength = 90;
+            // const midpoint_eye = midpoint(
+            //   [eye.left.x, eye.left.y],
+            //   [eye.right.x, eye.right.y]
+            // );
+            // ctx.moveTo(midpoint_eye.x, midpoint_eye.y - midpoint_etendlength);
+            // ctx.quadraticCurveTo(nose.x, nose.y, mouth.x, mouth.y + 60);
+            // //#endregion
+            // ctx.stroke();
+          }
+        });
       }
     } catch (error) {
       cameras.reset();
-      this._message.textContent = "không tìm thấy khuôn mặt trong khung hình";
+      console.log("error while draw prediction: ", error);
+      this._message.textContent = error.toString();
     }
-
-    ctx.drawImage(cameras.videoLive, 0, 0, 650, 480);
-    prediction.forEach((pred) => {
-      // draw the rectangle enclosing the face
-      ctx.strokeStyle = cameras.GREEN;
-      if (boundingBox) {
-        ctx.beginPath();
-        ctx.lineWidth = "1";
-
-        ctx.rect(
-          pred.topLeft[0],
-          pred.topLeft[1],
-          pred.bottomRight[0] - pred.topLeft[0],
-          pred.bottomRight[1] - pred.topLeft[1]
-        );
-        ctx.stroke();
-      }
-
-      if (showKeypoints) {
-        // drawing small rectangles for the face landmarks
-        ctx.fillStyle = cameras.RED;
-        // ctx.fillStyle = RED;
-        //detect 6 point of face
-        pred.landmarks.forEach((landmark) => {
-          ctx.fillRect(landmark[0], landmark[1], 4, 4);
-        });
-
-        // const eye = {
-        //   left: {
-        //     x: pred.landmarks[1][0],
-        //     y: pred.landmarks[1][1],
-        //   },
-        //   right: {
-        //     x: pred.landmarks[0][0],
-        //     y: pred.landmarks[0][1],
-        //   },
-        // };
-        // const nose = {
-        //   x: pred.landmarks[2][0],
-        //   y: pred.landmarks[2][1],
-        // };
-        // const mouth = {
-        //   x: pred.landmarks[3][0],
-        //   y: pred.landmarks[3][1],
-        // };
-        // const ear = {
-        //   left: {
-        //     x: pred.landmarks[5][0],
-        //     y: pred.landmarks[5][1],
-        //   },
-        //   right: {
-        //     x: pred.landmarks[4][0],
-        //     y: pred.landmarks[4][1],
-        //   },
-        // };
-        // // draw a red line
-        // // ctx.strokeStyle = GREEN;
-        // // ctx.lineWidth = 5;
-
-        // //#region parabol tu tai trai -20 -> midpoint -> tai phai
-        // const ear_extendlength = 20;
-        // ctx.moveTo(ear.left.x + ear_extendlength, ear.left.y);
-        // ctx.quadraticCurveTo(
-        //   nose.x,
-        //   nose.y - 60,
-        //   ear.right.x - ear_extendlength,
-        //   ear.right.y
-        // );
-        // //#endregion
-
-        // //tinh toa do trung diem cua 2 point
-        // function midpoint([x1, y1], [x2, y2]) {
-        //   return {
-        //     x: (x1 + x2) / 2,
-        //     y: (y1 + y2) / 2,
-        //   };
-        // }
-        // //#region parabol tu mom -> mui -> midpoint -40
-        // const midpoint_etendlength = 90;
-        // const midpoint_eye = midpoint(
-        //   [eye.left.x, eye.left.y],
-        //   [eye.right.x, eye.right.y]
-        // );
-        // ctx.moveTo(midpoint_eye.x, midpoint_eye.y - midpoint_etendlength);
-        // ctx.quadraticCurveTo(nose.x, nose.y, mouth.x, mouth.y + 60);
-        // //#endregion
-        // ctx.stroke();
-      }
-    });
   },
   detectFaces: async function () {
     if (cameras.model) {
@@ -310,7 +281,7 @@ const cameras = {
       cameras.drawResults(cameras.ctx, prediction, true, true);
     } else {
       console.log("model not found");
-      clearInterval(cameras.faceRunsInterval);
+      // clearInterval(cameras.faceRunsInterval);
     }
   },
   startTimer: function (duration, display) {
@@ -346,7 +317,7 @@ const cameras = {
     }
   },
   reset: function () {
-    this._timer.textContent = "recording: -_-";
+    this._timer.textContent = "recording: @_@";
     this.videoRecorded.style = "display:none";
     this.videoLive.style = "display:block";
     // cameras.loader.style = "display:block";
@@ -356,9 +327,10 @@ const cameras = {
     cameras.isRecording = false;
     clearInterval(cameras.timerInterval);
   },
-  stop: function () {
-    clearInterval(cameras.timerInterval);
-    clearInterval(cameras.faceRunsInterval);
+  stop: async function () {
+    await clearInterval(cameras.timerInterval);
+    await clearInterval(cameras.faceRunsInterval);
+    cameras.mediaRecorder.stop();
 
     setTimeout(() => {
       cameras.stream.getTracks().forEach(function (track) {
@@ -366,7 +338,6 @@ const cameras = {
       });
     }, 500);
 
-    cameras.mediaRecorder.stop();
     cameras.isRecording = false;
     cameras.faceVerify = true;
   },
