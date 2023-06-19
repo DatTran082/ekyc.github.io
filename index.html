@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- <link rel="stylesheet" href="./styles/style.css"> -->
+    <link rel="stylesheet" href="./styles/style.css">
     <script src="./models/jsdelivr.net_npm_@tensorflow_tfjs"></script>
     <script src="./models/jsdelivr.net_npm_@tensorflow-models_blazeface"></script>
 
@@ -22,14 +22,18 @@
       <div id="message">...</div>
     </h3>
 
-    <div class="body">
+    <div class="box">
       <video class="video" autoplay muted playsinline id="videoLive"
-        width="650px" height="480px"></video>
+        width="650px" height="480px">
+      </video>
+      <canvas id="canvas" class="canvas" width="650px" height="480px"></canvas>
+
       <video class="preview" width="660px" height="480px" autoplay controls
         playsinline style="display: none"
-        id="videoRecorded"></video>
-      <div id="loader" class="loader" style="display: none;"></div>
-      <canvas id="canvas" class="canvas" width="650px" height="480px"></canvas>
+        id="videoRecorded">
+      </video>
+
+      <!-- <div id="loader" class="loader"></div> -->
     </div>
     <div>
       <button type="button" id="confirm">Xác nhận</button>
@@ -40,79 +44,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface"></script>
   -->
-  <style>
-  * {
-    font-style: normal;
-    font-weight: bold;
-    text-transform: lowercase;
-    text-align: center;
-}
-
-.body {
-    margin: 0;
-    padding: 0;
-    display: grid;
-    justify-content: center;
-    align-items: center;
-}
-
-
-
-.video,
-.canvas {
-    object-fit: cover;
-    display: block;
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    min-width: 300px;
-    min-height: 300px;
-    height: 350px;
-    width: 350px;
-    margin: auto;
-    border-radius: 50%;
-    /* box-shadow: 0 0 100px -50px #000; */
-    border: 4px solid #8ab5f8;
-    z-index: 9;
-    transform: scale(-1, 1);
-}
-
-.preview {
-    object-fit: cover;
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    margin: auto;
-    min-width: 300px;
-    min-height: 300px;
-    height: 350px;
-    width: 350px;
-    border-radius: 7px;
-    z-index: 99;
-}
-
-
-#confirm {
-    display: none;
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 40px;
-    /* width: 100%; */
-    color: #FFFFFF;
-    background-color: #5898fff0;
-    border-radius: 5px;
-    margin: 12.5px;
-    border: none;
-
-}
-</style>
-  <script src="./scripts/camera.js"></script>
+  <script src="./scripts/index.js"></script>
   <script>
     cameras.init();
   </script>

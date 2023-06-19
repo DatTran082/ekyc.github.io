@@ -5,7 +5,7 @@
     text-align: center;
 }
 
-.body {
+.box {
     margin: 0;
     padding: 0;
     display: grid;
@@ -34,6 +34,7 @@
     border: 4px solid #8ab5f8;
     z-index: 9;
     transform: scale(-1, 1);
+    /* animation: spin 2s linear infinite; */
 }
 
 .preview {
@@ -67,4 +68,41 @@
     margin: 12.5px;
     border: none;
 
+}
+
+
+.loader {
+    --border-width: 5px;
+    display: block;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    min-width: 300px;
+    min-height: 300px;
+    height: 360px;
+    width: 360px;
+    margin: auto;
+    border-radius: 50%;
+    z-index: 99;
+
+    /* 0.5px's are needed to avoid hard-stopping */
+    --mask: radial-gradient(farthest-side, transparent calc(100% - var(--border-width) - 0.5px), #000 calc(100% - var(--border-width) + 0.5px));
+
+    -webkit-mask: var(--mask);
+    mask: var(--mask);
+    background: linear-gradient(#5898fff0 30%, transparent 80%) 0 0/50% 100% no-repeat;
+    /* this is our border image */
+    animation: spin 5s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
