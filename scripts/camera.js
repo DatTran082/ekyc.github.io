@@ -201,72 +201,75 @@ const cameras = {
           ctx.fillRect(landmark[0], landmark[1], 4, 4);
         });
 
-        const eye = {
-          left: {
-            x: pred.landmarks[1][0],
-            y: pred.landmarks[1][1],
-          },
-          right: {
-            x: pred.landmarks[0][0],
-            y: pred.landmarks[0][1],
-          },
-        };
-        const nose = {
-          x: pred.landmarks[2][0],
-          y: pred.landmarks[2][1],
-        };
-        const mouth = {
-          x: pred.landmarks[3][0],
-          y: pred.landmarks[3][1],
-        };
-        const ear = {
-          left: {
-            x: pred.landmarks[5][0],
-            y: pred.landmarks[5][1],
-          },
-          right: {
-            x: pred.landmarks[4][0],
-            y: pred.landmarks[4][1],
-          },
-        };
-        // draw a red line
-        // ctx.strokeStyle = GREEN;
-        // ctx.lineWidth = 5;
+        // const eye = {
+        //   left: {
+        //     x: pred.landmarks[1][0],
+        //     y: pred.landmarks[1][1],
+        //   },
+        //   right: {
+        //     x: pred.landmarks[0][0],
+        //     y: pred.landmarks[0][1],
+        //   },
+        // };
+        // const nose = {
+        //   x: pred.landmarks[2][0],
+        //   y: pred.landmarks[2][1],
+        // };
+        // const mouth = {
+        //   x: pred.landmarks[3][0],
+        //   y: pred.landmarks[3][1],
+        // };
+        // const ear = {
+        //   left: {
+        //     x: pred.landmarks[5][0],
+        //     y: pred.landmarks[5][1],
+        //   },
+        //   right: {
+        //     x: pred.landmarks[4][0],
+        //     y: pred.landmarks[4][1],
+        //   },
+        // };
+        // // draw a red line
+        // // ctx.strokeStyle = GREEN;
+        // // ctx.lineWidth = 5;
 
-        //#region parabol tu tai trai -20 -> midpoint -> tai phai
-        const ear_extendlength = 20;
-        ctx.moveTo(ear.left.x + ear_extendlength, ear.left.y);
-        ctx.quadraticCurveTo(
-          nose.x,
-          nose.y - 60,
-          ear.right.x - ear_extendlength,
-          ear.right.y
-        );
-        //#endregion
+        // //#region parabol tu tai trai -20 -> midpoint -> tai phai
+        // const ear_extendlength = 20;
+        // ctx.moveTo(ear.left.x + ear_extendlength, ear.left.y);
+        // ctx.quadraticCurveTo(
+        //   nose.x,
+        //   nose.y - 60,
+        //   ear.right.x - ear_extendlength,
+        //   ear.right.y
+        // );
+        // //#endregion
 
-        //tinh toa do trung diem cua 2 point
-        function midpoint([x1, y1], [x2, y2]) {
-          return {
-            x: (x1 + x2) / 2,
-            y: (y1 + y2) / 2,
-          };
-        }
-        //#region parabol tu mom -> mui -> midpoint -40
-        const midpoint_etendlength = 90;
-        const midpoint_eye = midpoint(
-          [eye.left.x, eye.left.y],
-          [eye.right.x, eye.right.y]
-        );
-        ctx.moveTo(midpoint_eye.x, midpoint_eye.y - midpoint_etendlength);
-        ctx.quadraticCurveTo(nose.x, nose.y, mouth.x, mouth.y + 60);
-        //#endregion
-        ctx.stroke();
+        // //tinh toa do trung diem cua 2 point
+        // function midpoint([x1, y1], [x2, y2]) {
+        //   return {
+        //     x: (x1 + x2) / 2,
+        //     y: (y1 + y2) / 2,
+        //   };
+        // }
+        // //#region parabol tu mom -> mui -> midpoint -40
+        // const midpoint_etendlength = 90;
+        // const midpoint_eye = midpoint(
+        //   [eye.left.x, eye.left.y],
+        //   [eye.right.x, eye.right.y]
+        // );
+        // ctx.moveTo(midpoint_eye.x, midpoint_eye.y - midpoint_etendlength);
+        // ctx.quadraticCurveTo(nose.x, nose.y, mouth.x, mouth.y + 60);
+        // //#endregion
+        // ctx.stroke();
       }
     });
   },
   detectFaces: async function () {
     const estimationConfig = { flipHorizontal: true };
-    const prediction = await cameras.model.estimateFaces(this.videoLive, false);
+    const prediction = await cameras.model.estimateFaces(
+      cameras.videoLive,
+      false
+    );
 
     // console.log(prediction);
 
