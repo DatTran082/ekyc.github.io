@@ -37,6 +37,11 @@ const cameras = {
 
     try {
       cameras.model = await blazeface.load();
+
+      // cameras.model = await tf.loadGraphModel(
+      //   "https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface"
+      // );
+
       console.log("model loaded: ", cameras.model);
     } catch (error) {
       console.log("init faceDetection failure: ", error);
@@ -55,7 +60,7 @@ const cameras = {
         // if (cameras.faceRunsInterval) {
         //   clearInterval(cameras.faceRunsInterval);
         // }
-        cameras.faceRunsInterval = setInterval(cameras.detectFaces, 100);
+        cameras.faceRunsInterval = setInterval(cameras.detectFaces, 50);
       });
 
       cameras.handleEvent();
