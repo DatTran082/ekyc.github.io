@@ -87,6 +87,19 @@ const cameras = {
           cameras.loader.style = "display:none";
           cameras.videoRecorded.style = "display:block";
           cameras.confirm.style = "display:block";
+          const isVideoPlaying = (video) =>
+            !!(
+              video.currentTime > 0 &&
+              !video.paused &&
+              !video.ended &&
+              video.readyState > 2
+            );
+
+          if (isVideoPlaying(cameras.videoRecorded)) {
+            cameras.stream.getTracks().forEach(function (track) {
+              track.stop();
+            });
+          }
         }
       });
     } catch (error) {
@@ -330,11 +343,11 @@ const cameras = {
     clearInterval(cameras.faceRunsInterval);
     cameras.mediaRecorder.stop();
 
-    setTimeout(function () {
-      // cameras.stream.getTracks().forEach(function (track) {
-      //   track.stop();
-      // });
-    }, 100);
+    // setTimeout(function () {
+    //   // cameras.stream.getTracks().forEach(function (track) {
+    //   //   track.stop();
+    //   // });
+    // }, 100);
 
     cameras.isRecording = false;
     cameras.faceVerify = true;
