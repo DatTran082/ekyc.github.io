@@ -19,8 +19,17 @@ const cameras = {
   isRecording: false,
   faceRunsInterval: null,
   init: async function () {
+    if (
+      location.hostname === "localhost" ||
+      location.hostname === "http://10.0.10.82/" ||
+      location.protocol === "https:"
+    ) {
+      console.log("Run WebRTC code");
+    } else {
+      console.log("Redirect user from http to https");
+    }
+
     this.videoLive = document.querySelector("#videoLive");
-    // this.loader = document.querySelector("#loader");
     this.confirm = document.querySelector("#confirm");
     this.videoRecorded = document.querySelector("#videoRecorded");
     this._timer = document.querySelector("#timer");
