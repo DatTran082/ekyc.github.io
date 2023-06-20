@@ -16,18 +16,14 @@ const cameras = {
   model: null,
   canvas: null,
   ctx: null,
-  isRecording: false,
+  isMediaRecorderSupported: false,
   faceRunsInterval: null,
   init: async function () {
-    if (
-      location.hostname === "localhost" ||
-      location.hostname === "http://10.0.10.82/" ||
-      location.protocol === "https:"
-    ) {
-      console.log("Run WebRTC code");
-    } else {
-      console.log("Redirect user from http to https");
-    }
+    // if (location.hostname === "localhost" || location.hostname === "http://10.0.10.82/" || location.protocol === "https:") {
+    //   console.log("Run WebRTC code");
+    // } else {
+    //   console.log("Redirect user from http to https");
+    // }
 
     this.videoLive = document.querySelector("#videoLive");
     this.confirm = document.querySelector("#confirm");
@@ -35,7 +31,7 @@ const cameras = {
     this._timer = document.querySelector("#timer");
     this._message = document.querySelector("#message");
     this.timer = new _timerHandle(this.handleTimer);
-    this.timer.reset(this.RECSECONDS);
+    this.timer.reset(cameras.RECSECONDS);
     this.timer.mode(0);
 
     this.canvas = document.getElementById("canvas");
@@ -73,14 +69,23 @@ const cameras = {
   },
   handleEvent: async function () {
     try {
-      if (!MediaRecorder.isTypeSupported("video/webm")) {
-        console.warn("video/webm is not supported");
+      var options;
+      if (MediaRecorder.isTypeSupported("video/mp4")) {
+        options = { mimeType: "video/mp4", videoBitsPerSecond: 100000 };
+      } else if (MediaRecorder.isTypeSupported("video/webm")) {
+        options = { mimeType: "video/webm" };
+      } else if (MediaRecorder.isTypeSupported("video/webm; codecs=vp9")) {
+        options = { mimeType: "video/webm; codecs=vp9" };
+      } else {
+        console.error("no suitable mimetype found for this device");
         this._message.textContent = "MediaRecorder is not supported";
       }
 
-      this.mediaRecorder = new MediaRecorder(this.stream, {
-        mimeType: "video/webm",
-      });
+      if (options) {
+        this.isMediaRecorderSupported = true;
+        this._message.textContent = "mimeType: " + options.mimeType.toString();
+        this.mediaRecorder = new MediaRecorder(cameras.stream, options);
+      }
 
       this.mediaRecorder.addEventListener("dataavailable", (event) => {
         if (this.faceVerify == true) {
@@ -90,12 +95,17 @@ const cameras = {
         }
       });
     } catch (error) {
-      this._message.textContent = "MediaRecorder is not supported";
+      this._message.textContent =
+        "MediaRecorder is not supported: " + error.toString();
       console.log(error);
     }
   },
   drawResults: function (ctx, prediction, boundingBox, showKeypoints) {
     // console.log("pred => ", prediction);
+
+    //cameras.canvas.width = cameras.videoLive.offsetWidthw;
+    //cameras.canvas.height = cameras.videoLive.offsetHeight;
+
     try {
       if (prediction == undefined || prediction.length == 0) {
         this.reset();
@@ -120,37 +130,37 @@ const cameras = {
             "vui lòng giữ khuôn mặt cách màn hình khoảng 30cm và không bị che";
           this.reset();
         } else {
-          this._message.textContent = "^_^";
+          this._message.textContent = "";
           this.start();
         }
-
-        ctx.drawImage(this.videoLive, 0, 0, 650, 480);
-        prediction.forEach((pred) => {
-          // draw the rectangle enclosing the face
-          ctx.strokeStyle = cameras.GREEN;
-          if (boundingBox) {
-            ctx.beginPath();
-            ctx.lineWidth = "1";
-
-            ctx.rect(
-              pred.topLeft[0],
-              pred.topLeft[1],
-              pred.bottomRight[0] - pred.topLeft[0],
-              pred.bottomRight[1] - pred.topLeft[1]
-            );
-            ctx.stroke();
-          }
-
-          if (showKeypoints) {
-            // drawing small rectangles for the face landmarks
-            ctx.fillStyle = cameras.RED;
-            //drawing 6 point of face
-            pred.landmarks.forEach((landmark) => {
-              ctx.fillRect(landmark[0], landmark[1], 4, 4);
-            });
-          }
-        });
       }
+
+      ctx.drawImage(this.videoLive, 0, 0, 650, 480);
+      prediction.forEach((pred) => {
+        // draw the rectangle enclosing the face
+        ctx.strokeStyle = cameras.GREEN;
+        if (boundingBox) {
+          ctx.beginPath();
+          ctx.lineWidth = "1";
+
+          ctx.rect(
+            pred.topLeft[0],
+            pred.topLeft[1],
+            pred.bottomRight[0] - pred.topLeft[0],
+            pred.bottomRight[1] - pred.topLeft[1]
+          );
+          ctx.stroke();
+        }
+
+        if (showKeypoints) {
+          // drawing small rectangles for the face landmarks
+          ctx.fillStyle = cameras.RED;
+          //drawing 6 point of face
+          pred.landmarks.forEach((landmark) => {
+            ctx.fillRect(landmark[0], landmark[1], 4, 4);
+          });
+        }
+      });
     } catch (error) {
       cameras.reset();
       console.log("error while draw prediction: ", error);
@@ -168,43 +178,54 @@ const cameras = {
       cameras.drawResults(cameras.ctx, prediction, true, true);
     } catch (error) {
       console.log("model not found: ", error);
-      clearInterval(cameras.faceRunsInterval);
+      // clearInterval(cameras.faceRunsInterval);
     }
   },
   start: function () {
-    if (cameras.timer.getStatus() == 0) {
-      cameras.timer.start(1000);
-      cameras.mediaRecorder.start();
-
+    if (this.isMediaRecorderSupported) {
+      if (cameras.timer.getStatus() == 0 && cameras.stream.active) {
+        cameras.timer.start(1000);
+        cameras.mediaRecorder.start();
+      }
       // cameras.videoRecorded.style = "display:none";
-      // cameras.videoLive.style = "display:block";
+      // cameras.videoLive.style = "display:block";}
+    } else {
+      this._message.textContent = "MediaRecorder is not supported";
     }
   },
   reset: function () {
-    cameras.timer.stop();
-    cameras.timer.reset(cameras.RECSECONDS);
-    cameras.mediaRecorder.stop();
+    if (this.isMediaRecorderSupported) {
+      cameras.timer.stop();
+      cameras.timer.reset(cameras.RECSECONDS);
+      cameras.mediaRecorder.stop();
 
-    cameras.videoRecorded.style = "display:none";
-    cameras.videoLive.style = "display:block";
+      cameras.videoRecorded.style = "display:none";
+      cameras.videoLive.style = "display:block";
 
-    if (cameras.faceVerify) {
-      //init Detectface
+      if (cameras.faceVerify) {
+        //init Detectface
+      }
+    } else {
+      this._message.textContent = "MediaRecorder is not supported";
     }
   },
   stop: function () {
-    clearInterval(cameras.faceRunsInterval);
+    if (this.isMediaRecorderSupported) {
+      clearInterval(cameras.faceRunsInterval);
 
-    cameras.timer.stop();
-    cameras.mediaRecorder.stop();
-    cameras.faceVerify = true;
+      cameras.timer.stop();
+      cameras.mediaRecorder.stop();
+      cameras.faceVerify = true;
 
-    cameras.stream.getTracks().forEach(function (track) {
-      track.stop();
-    });
+      cameras.stream.getTracks().forEach(function (track) {
+        track.stop();
+      });
 
-    cameras.videoRecorded.style = "display:block";
-    cameras.videoLive.style = "display:none";
+      cameras.videoRecorded.style = "display:block";
+      cameras.videoLive.style = "display:none";
+    } else {
+      this._message.textContent = "MediaRecorder is not supported";
+    }
   },
   handleTimer: function (time) {
     cameras._timer.textContent = "recording: " + time + " s";
