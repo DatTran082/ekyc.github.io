@@ -92,7 +92,7 @@ const cameras = {
   stream: null,
   _timer: null,
   timer: null,
-  RECSECONDS: 6,
+  RECSECONDS: 5,
   _message: null,
   model: null,
   device: null,
@@ -129,6 +129,7 @@ const cameras = {
     this.timer.mode(0);
 
     this.device = cameras.getMobileOperatingSystem();
+    console.log("device: ", this.device);
 
     this.canvas = document.getElementById("canvas");
     this.ctx = this.canvas.getContext("2d");
@@ -244,19 +245,23 @@ const cameras = {
     }
   },
   drawImageScaled: function (frame, ctx, prediction, boundingBox, showKeypoints) {
-    const ratio = Math.min(cameras.canvas.width / frame.width, cameras.canvas.height / frame.height);
-    const centerShift_x = (cameras.canvas.width - frame.width * ratio) / 2;
-    const centerShift_y = (cameras.canvas.height - frame.height * ratio) / 2;
+    // const ratio = Math.min(cameras.canvas.width / frame.width, cameras.canvas.height / frame.height);
+    // const centerShift_x = (cameras.canvas.width - frame.width * ratio) / 2;
+    // const centerShift_y = (cameras.canvas.height - frame.height * ratio) / 2;
     let translation = { x: 0, y: 0 };
 
     if (cameras.device === "IOS") {
+      translation = { x: 85, y: 85 };
+    } else if (cameras.device === "ANDROID") {
+      translation = { x: 85, y: 85 };
+    } else if (cameras.device === "macOs") {
       translation = { x: 85, y: 85 };
     }
 
     ctx.clearRect(0, 0, cameras.canvas.width, cameras.canvas.height);
     // ctx.drawImage(frame, 0, 0, frame.width, frame.height, centerShift_x, centerShift_y, frame.width * ratio, frame.height * ratio);
 
-    prediction.forEach((pred) => {
+    prediction.map((pred) => {
       if (boundingBox) {
         ctx.strokeStyle = cameras.GREEN;
         ctx.beginPath();
@@ -267,7 +272,7 @@ const cameras = {
 
       if (showKeypoints) {
         ctx.fillStyle = cameras.RED;
-        pred.landmarks.forEach((landmark) => {
+        pred.landmarks.map((landmark) => {
           ctx.fillRect(landmark[0] + translation.x, landmark[1] - translation.y, 4, 4);
         });
       }
