@@ -250,13 +250,13 @@ const cameras = {
     // const ratio = Math.min(cameras.canvas.width / frame.width, cameras.canvas.height / frame.height);
     // const centerShift_x = (cameras.canvas.width - frame.width * ratio) / 2;
     // const centerShift_y = (cameras.canvas.height - frame.height * ratio) / 2;
-    let translation = { x: 85, y: 85 };
+    let translation = { x: 0, y: 0 };
 
-    // if (cameras.device === "IOS") {
-    //   translation = { x: 85, y: 85 };
-    // } else if (cameras.device === "ANDROID") {
-    //   translation = { x: 85, y: 85 };
-    // }
+    if (cameras.device === "IOS") {
+      translation = { x: 85, y: 85 };
+    } else if (cameras.device === "ANDROID") {
+      translation = { x: 85, y: 85 };
+    }
 
     // ctx.drawImage(frame, 0, 0, frame.width, frame.height, centerShift_x, centerShift_y, frame.width * ratio, frame.height * ratio);
 
@@ -279,30 +279,30 @@ const cameras = {
       if (showFaceLine) {
         const eye = {
           left: {
-            x: pred.landmarks[1][0],
-            y: pred.landmarks[1][1],
+            x: pred.landmarks[1][0] + translation.x,
+            y: pred.landmarks[1][1] - translation.y,
           },
           right: {
-            x: pred.landmarks[0][0],
-            y: pred.landmarks[0][1],
+            x: pred.landmarks[0][0] + translation.x,
+            y: pred.landmarks[0][1] - translation.y,
           },
         };
         const nose = {
-          x: pred.landmarks[2][0],
-          y: pred.landmarks[2][1],
+          x: pred.landmarks[2][0] + translation.x,
+          y: pred.landmarks[2][1] - translation.y,
         };
         const mouth = {
-          x: pred.landmarks[3][0],
-          y: pred.landmarks[3][1],
+          x: pred.landmarks[3][0] + translation.x,
+          y: pred.landmarks[3][1] - translation.y,
         };
         const ear = {
           left: {
-            x: pred.landmarks[5][0],
-            y: pred.landmarks[5][1],
+            x: pred.landmarks[5][0] + translation.x,
+            y: pred.landmarks[5][1] - translation.y,
           },
           right: {
-            x: pred.landmarks[4][0],
-            y: pred.landmarks[4][1],
+            x: pred.landmarks[4][0] + translation.x,
+            y: pred.landmarks[4][1] - translation.y,
           },
         };
 
@@ -314,10 +314,7 @@ const cameras = {
 
         //tinh toa do trung diem cua 2 point
         function midpoint([x1, y1], [x2, y2]) {
-          return {
-            x: (x1 + x2) / 2,
-            y: (y1 + y2) / 2,
-          };
+          return { x: (x1 + x2) / 2, y: (y1 + y2) / 2 };
         }
         //#region parabol tu mom -> mui -> midpoint -40
         const midpoint_etendlength = 90;
