@@ -178,7 +178,7 @@ const cameras = {
 
       if (options) {
         this.isMediaRecorderSupported = true;
-        this._message.textContent = "mimeType: " + options.mimeType;
+        this._message.textContent = "mimeType: " + options.mimeType.toString();
         this.mediaRecorder = new MediaRecorder(cameras.stream, options);
       }
 
@@ -201,16 +201,18 @@ const cameras = {
   },
   processResults: function (ctx, prediction) {
     // console.log("pred => ", prediction);
+
+    //cameras.canvas.width = cameras.videoLive.offsetWidthw;
+    //cameras.canvas.height = cameras.videoLive.offsetHeight;
+
     try {
       if (prediction == undefined || prediction.length == 0) {
         this.reset();
         this._message.textContent = "không tìm thấy khuôn mặt trong khung hình";
-        cameras.drawImageScaled(cameras.videoLive, ctx, prediction, false, false, false);
       } else if (prediction.length > 1) {
         this.reset();
         this._message.textContent = "chỉ cho phép 1 khuôn mặt trong khung hình";
-        cameras.drawImageScaled(cameras.videoLive, ctx, prediction, true, false, false);
-      } else {
+      } else if (prediction[0].landmarks.length == 6) {
         const probability = prediction[0].probability[0];
 
         if (
@@ -219,19 +221,19 @@ const cameras = {
           prediction[0].topLeft[1] < 0 || //y->
           prediction[0].topLeft[1] > 250 //y-<
         ) {
-          this.reset();
           this._message.textContent = "Giữ cho khuôn mặt ở chính giữa và cách màn hình khoảng 30cm";
-          cameras.drawImageScaled(cameras.videoLive, ctx, prediction, true, true, false);
-        } else if (probability < 0.995) {
           this.reset();
+        } else if (probability < 0.995) {
+          //check percentage output
           this._message.textContent = "vui lòng giữ khuôn mặt cách màn hình khoảng 30cm và không bị che";
-          cameras.drawImageScaled(cameras.videoLive, ctx, prediction, false, true, true);
+          this.reset();
         } else {
-          // this.start();
           this._message.textContent = "";
-          cameras.drawImageScaled(cameras.videoLive, ctx, prediction, false, true, true);
+          // this.start();
         }
       }
+
+      cameras.drawImageScaled(cameras.videoLive, ctx, prediction, true, false, true);
     } catch (error) {
       cameras.reset();
       console.log("error while draw prediction: ", error);
@@ -256,8 +258,8 @@ const cameras = {
 
     prediction.map((pred) => {
       if (boundingBox) {
-        ctx.beginPath();
         ctx.strokeStyle = "#FFFFFF";
+        ctx.beginPath();
         ctx.lineWidth = "4";
         ctx.roundRect(pred.topLeft[0] + translation.x, pred.topLeft[1] - translation.y, pred.bottomRight[0] - pred.topLeft[0], pred.bottomRight[1] - pred.topLeft[1], 8);
         ctx.stroke();
@@ -271,22 +273,51 @@ const cameras = {
       }
 
       if (showFaceLine) {
-        // const eye = { left: { x: pred.landmarks[1][0] + translation.x, y: pred.landmarks[1][1] - translation.y }, right: { x: pred.landmarks[0][0] + translation.x, y: pred.landmarks[0][1] - translation.y } };
-        // const mouth = { x: pred.landmarks[3][0] + translation.x, y: pred.landmarks[3][1] - translation.y };
-        // const ear = { left: { x: pred.landmarks[5][0] + translation.x, y: pred.landmarks[5][1] - translation.y }, right: { x: pred.landmarks[4][0] + translation.x, y: pred.landmarks[4][1] - translation.y } };
-        const nose = { x: pred.landmarks[2][0] + translation.x, y: pred.landmarks[2][1] - translation.y };
+        const eye = {
+          left: {
+            x: pred.landmarks[1][0] + translation.x,
+            y: pred.landmarks[1][1] - translation.y,
+          },
+          right: {
+            x: pred.landmarks[0][0] + translation.x,
+            y: pred.landmarks[0][1] - translation.y,
+          },
+        };
+        const nose = {
+          x: pred.landmarks[2][0] + translation.x,
+          y: pred.landmarks[2][1] - translation.y,
+        };
+        const mouth = {
+          x: pred.landmarks[3][0] + translation.x,
+          y: pred.landmarks[3][1] - translation.y,
+        };
+        const ear = {
+          left: {
+            x: pred.landmarks[5][0] + translation.x,
+            y: pred.landmarks[5][1] - translation.y,
+          },
+          right: {
+            x: pred.landmarks[4][0] + translation.x,
+            y: pred.landmarks[4][1] - translation.y,
+          },
+        };
 
-        ctx.beginPath();
-        ctx.strokeStyle = "#FFFFFF";
-        ctx.lineWidth = "3";
-        ctx.filter = "blur(1px)";
-        //horizon parabol
-        ctx.moveTo(cameras.canvas.width - 90, cameras.canvas.height / 2);
-        ctx.quadraticCurveTo(nose.x, nose.y - 80, 90, cameras.canvas.height / 2);
-        //vertical parabol
-        ctx.moveTo(cameras.canvas.width / 2, 5);
-        ctx.quadraticCurveTo(nose.x, nose.y - 80, cameras.canvas.width / 2, cameras.canvas.height - 5);
+        //#region parabol tu tai trai -20 -> midpoint -> tai phai
+        const ear_extendlength = 20;
+        ctx.moveTo(ear.left.x + ear_extendlength, ear.left.y);
+        ctx.quadraticCurveTo(nose.x, nose.y - 60, ear.right.x - ear_extendlength, ear.right.y);
+        //#endregion
 
+        //tinh toa do trung diem cua 2 point
+        function midpoint([x1, y1], [x2, y2]) {
+          return { x: (x1 + x2) / 2, y: (y1 + y2) / 2 };
+        }
+        //#region parabol tu mom -> mui -> midpoint -40
+        const midpoint_etendlength = 90;
+        const midpoint_eye = midpoint([eye.left.x, eye.left.y], [eye.right.x, eye.right.y]);
+        ctx.moveTo(midpoint_eye.x, midpoint_eye.y - midpoint_etendlength);
+        ctx.quadraticCurveTo(nose.x, nose.y, mouth.x, mouth.y + 60);
+        //#endregion
         ctx.stroke();
       }
     });
