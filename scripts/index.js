@@ -239,42 +239,48 @@ const cameras = {
     }
   },
   drawImageScaled: function (frame, ctx, prediction, boundingBox, showKeypoints, showFaceLine) {
-    ctx.clearRect(0, 0, cameras.canvas.width, cameras.canvas.height);
-
     // const ratio = Math.min(cameras.canvas.width / frame.width, cameras.canvas.height / frame.height);
     // const centerShift_x = (cameras.canvas.width - frame.width * ratio) / 2;
     // const centerShift_y = (cameras.canvas.height - frame.height * ratio) / 2;
-    let translation = { x: 0, y: 0 };
+    // ctx.drawImage(frame, 0, 0, frame.width, frame.height, centerShift_x, centerShift_y, frame.width * ratio, frame.height * ratio);
+
+    ctx.clearRect(0, 0, cameras.canvas.width, cameras.canvas.height);
+
+    let standard_deviation = { x: 0, y: 0 };
 
     if (cameras.device === "IOS") {
-      translation = { x: 85, y: 85 };
+      standard_deviation = { x: 85, y: 85 };
     } else if (cameras.device === "ANDROID") {
-      translation = { x: 85, y: 85 };
+      standard_deviation = { x: 85, y: 85 };
     }
 
-    // ctx.drawImage(frame, 0, 0, frame.width, frame.height, centerShift_x, centerShift_y, frame.width * ratio, frame.height * ratio);
+    function translation(pos, axis) {
+      if (axis === "OX") return pos + standard_deviation.x;
+      else if (axis === "OY") return pos - standard_deviation.y;
+      else return { x: pos.x + standard_deviation.x, y: pos - standard_deviation.y };
+    }
 
     prediction.map((pred) => {
       if (boundingBox) {
         ctx.beginPath();
         ctx.strokeStyle = "#FFFFFF";
         ctx.lineWidth = "4";
-        ctx.roundRect(pred.topLeft[0] + translation.x, pred.topLeft[1] - translation.y, pred.bottomRight[0] - pred.topLeft[0], pred.bottomRight[1] - pred.topLeft[1], 8);
+        ctx.roundRect(translation(pred.topLeft[0], "OX"), translation(pred.topLeft[1], "OY"), pred.bottomRight[0] - pred.topLeft[0], pred.bottomRight[1] - pred.topLeft[1], 8);
         ctx.stroke();
       }
 
       if (showKeypoints) {
         ctx.fillStyle = cameras.RED;
         pred.landmarks.map((landmark) => {
-          ctx.fillRect(landmark[0] + translation.x, landmark[1] - translation.y, 4, 4);
+          ctx.fillRect(translation(landmark[0], "OX"), translation(landmark[1], "OY"), 4, 4);
         });
       }
 
       if (showFaceLine) {
-        // const eye = { left: { x: pred.landmarks[1][0] + translation.x, y: pred.landmarks[1][1] - translation.y }, right: { x: pred.landmarks[0][0] + translation.x, y: pred.landmarks[0][1] - translation.y } };
-        // const mouth = { x: pred.landmarks[3][0] + translation.x, y: pred.landmarks[3][1] - translation.y };
-        // const ear = { left: { x: pred.landmarks[5][0] + translation.x, y: pred.landmarks[5][1] - translation.y }, right: { x: pred.landmarks[4][0] + translation.x, y: pred.landmarks[4][1] - translation.y } };
-        const nose = { x: pred.landmarks[2][0] + translation.x, y: pred.landmarks[2][1] - translation.y };
+        // const eye = { left: { x: translation(pred.landmarks[1][0], "OX"), y: translation(pred.landmarks[1][1], "OY") }, right: { x: translation(pred.landmarks[0][0], "OX"), y: translation(pred.landmarks[0][1], "OY") } };
+        // const ear = { left: { x: translation(pred.landmarks[5][0], "OX"), y: translation(pred.landmarks[5][1], "OY") }, right: { x: translation(pred.landmarks[4][0], "OX"), y: translation(pred.landmarks[4][1], "OY") } };
+        // const mouth = { x: translation(pred.landmarks[3][0], "OX"), y: translation(pred.landmarks[3][1], "OY") };
+        const nose = { x: translation(pred.landmarks[2][0], "OX"), y: translation(pred.landmarks[2][1], "OY") };
 
         ctx.beginPath();
         ctx.strokeStyle = "#FFFFFF";
