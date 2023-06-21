@@ -102,16 +102,13 @@ const cameras = {
   faceRunsInterval: null,
   getMobileOperatingSystem: function () {
     const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-    // Windows Phone must come first because its UA also contains "Android"
+
     if (/windows phone/i.test(userAgent)) {
       return "Windows Phone";
     }
-
     if (/android/i.test(userAgent)) {
       return "ANDROID";
     }
-
-    // iOS detection from: http://stackoverflow.com/a/9039885/177710
     if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
       return "IOS";
     }
@@ -129,7 +126,6 @@ const cameras = {
     this.timer.mode(0);
 
     this.device = cameras.getMobileOperatingSystem();
-    console.log("device: ", this.device);
 
     this.canvas = document.getElementById("canvas");
     this.ctx = this.canvas.getContext("2d");
@@ -237,7 +233,7 @@ const cameras = {
         }
       }
 
-      cameras.drawImageScaled(cameras.videoLive, ctx, prediction, true, true, false);
+      cameras.drawImageScaled(cameras.videoLive, ctx, prediction, true, true, true);
     } catch (error) {
       cameras.reset();
       console.log("error while draw prediction: ", error);
@@ -306,6 +302,12 @@ const cameras = {
           },
         };
 
+        cameras.canvas.save();
+        cameras.canvas.globalAlpha = 1;
+        cameras.canvas.globalCompositeOperation = "destination-in";
+        const fadeOutAmount = 0.99;
+        cameras.canvas.fillStyle = "rgba(0, 0, 0, fadeOutAmount)";
+
         //#region parabol tu tai trai -20 -> midpoint -> tai phai
         const ear_extendlength = 20;
         ctx.moveTo(ear.left.x + ear_extendlength, ear.left.y);
@@ -323,6 +325,9 @@ const cameras = {
         ctx.quadraticCurveTo(nose.x, nose.y, mouth.x, mouth.y + 60);
         //#endregion
         ctx.stroke();
+
+        cameras.canvas.fillRect(0, 0, cameras.canvas.width, cameras.canvas.height);
+        cameras.canvas.restore();
       }
     });
   },
