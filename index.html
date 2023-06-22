@@ -17,28 +17,30 @@
   </head>
 
   <body>
-    <h3>quay mặt theo hướng từ trái qua phải
-      <div id="timer">recording: 00:05</div>
-      <div id="message">...</div>
-    </h3>
+    <form id="FaceAuthenForm">
+      <h3>quay mặt theo hướng từ trái qua phải
+        <div id="timer">recording: 00:05</div>
+        <div id="message">...</div>
+      </h3>
 
-    <div class="box">
-      <video class="video" autoplay muted playsinline id="videoLive"
-        width="650px" height="480px">
-      </video>
-      <canvas id="canvas" class="canvas" width="650px" height="480px"></canvas>
+      <div class="box">
+        <video class="video" autoplay muted playsinline id="videoLive"
+          width="650px" height="480px">
+        </video>
+        <canvas id="canvas" class="canvas" width="650px" height="480px"></canvas>
 
-      <video class="preview" width="660px" height="480px" autoplay controls
-        playsinline style="display: none"
-        id="videoRecorded">
-      </video>
+        <video class="preview" width="660px" height="480px" autoplay controls
+          playsinline style="display: none"
+          id="videoRecorded">
+        </video>
 
-      <!-- <div id="loader" class="loader"></div> -->
-    </div>
-    <div>
-      <button type="button" id="retake">Thực hiện lại</button>
-      <button type="button" id="confirm">Xác nhận</button>
-    </div>
+        <!-- <div id="loader" class="loader"></div> -->
+      </div>
+      <div class="btngroup">
+        <button type="button" id="retake">Thực hiện lại</button>
+        <button type="submit" id="confirm">Xác nhận</button>
+      </div>
+    </form>
 
   </body>
   <!-- 

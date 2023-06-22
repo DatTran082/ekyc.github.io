@@ -206,7 +206,7 @@ const cameras = {
         }
       });
 
-      this._retake.addEventListener("onClick", function () {
+      this._retake.addEventListener("click", function () {
         if (cameras.faceVerify && cameras.stream.active == false) {
           cameras.startStream();
           cameras.reset();

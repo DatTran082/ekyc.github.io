@@ -51,72 +51,27 @@
     z-index: 19;
 }
 
-
-#confirm {
-    display: none;
+.btngroup {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
+    width: 100%;
+}
+
+#confirm,
+#retake {
+    display: none;
     height: 40px;
-    /* width: 100%; */
+    width: 90%;
+    margin: 10px auto;
     color: #FFFFFF;
     background-color: #5898fff0;
     border-radius: 5px;
-    margin: 12.5px;
     border: none;
 
 }
 
 #retake {
-    display: none;
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 40px;
-    /* width: 100%; */
-    color: #FFFFFF;
-    background-color: #9e9e9ef0;
-    border-radius: 5px;
-    margin: 12.5px;
-    border: none;
-
-}
-
-
-.loader {
-    --border-width: 5px;
-    display: block;
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    min-width: 300px;
-    min-height: 300px;
-    height: 360px;
-    width: 360px;
-    margin: auto;
-    border-radius: 50%;
-    z-index: 99;
-
-    /* 0.5px's are needed to avoid hard-stopping */
-    --mask: radial-gradient(farthest-side, transparent calc(100% - var(--border-width) - 0.5px), #000 calc(100% - var(--border-width) + 0.5px));
-
-    -webkit-mask: var(--mask);
-    mask: var(--mask);
-    background: linear-gradient(#5898fff0 30%, transparent 80%) 0 0/50% 100% no-repeat;
-    /* this is our border image */
-    animation: spin 5s linear infinite;
-}
-
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
+    background-color: #d7d7d7e2;
 }
