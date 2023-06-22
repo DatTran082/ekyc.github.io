@@ -96,6 +96,21 @@ const cameras = {
   mediaRecorder: null,
   faceRunsInterval: null,
   standardDeviation: { x: 0, y: 0 },
+  generateUUID: function () {
+    var d = new Date().getTime();
+    var d2 = (typeof performance !== "undefined" && performance.now && performance.now() * 1000) || 0; //Time in microseconds since page-load or 0 if unsupported
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+      var r = Math.random() * 16;
+      if (d > 0) {
+        r = (d + r) % 16 | 0;
+        d = Math.floor(d / 16);
+      } else {
+        r = (d2 + r) % 16 | 0;
+        d2 = Math.floor(d2 / 16);
+      }
+      return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+    });
+  },
   getMobileOperatingSystem: function () {
     const userAgent = navigator.userAgent || navigator.vendor || window.opera;
 
@@ -192,19 +207,12 @@ const cameras = {
 
             const chunks = [];
             chunks.push(e.data);
+            const fileName = cameras.generateUUID();
 
-            if (cameras.device === "ANDROID") {
-              let blob = new Blob(chunks, { type: "video/webm" });
-              cameras._faceAuthenForm.append("videoFile", blob, "video.webm");
-            } else if (this.device === "IOS") {
-              var blob = new Blob(chunks, { type: "video/mp4" });
-              cameras._faceAuthenForm.append("videoFile", blob, "video.mp4");
-            } else {
-              const file = cameras.device === "IOS" ? new File(chunks, "mediaSource.mp4", { type: "video/mp4" }) : new File(chunks, "mediaSource.webm", { type: "video/webm" });
-              const dataTransfer = new DataTransfer();
-              dataTransfer.items.add(file);
-              cameras._faceRecord.files = dataTransfer.files;
-            }
+            const file = cameras.device === "IOS" ? new File(chunks, `${fileName}.mp4`, { type: "video/mp4" }) : new File(chunks, `${fileName}.webm`, { type: "video/webm" });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            cameras._faceRecord.files = dataTransfer.files;
           }
         });
       }

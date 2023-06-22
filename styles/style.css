@@ -1,34 +1,27 @@
 * {
-    font-style: normal;
-    font-weight: bold;
-    text-transform: lowercase;
-    text-align: center;
+    padding: 0;
+    margin: 0;
 }
 
 .box {
-    margin: 0;
-    padding: 0;
-    display: grid;
-    justify-content: center;
-    align-items: center;
+    display: block;
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    margin: 24px auto;
 }
 
-
-
 .video,
-.canvas {
-    object-fit: cover;
-    display: block;
+.canvas,
+.preview {
     position: absolute;
-    top: 0;
-    bottom: 0;
     left: 0;
     right: 0;
-    min-width: 300px;
-    min-height: 300px;
-    height: 350px;
-    width: 350px;
+    height: 95%;
+    width: 95%;
     margin: auto;
+    object-fit: cover;
+    display: block;
     border-radius: 50%;
     border: 4px solid #8ab5f8;
     z-index: 9;
@@ -36,22 +29,23 @@
 }
 
 .preview {
-    object-fit: cover;
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    margin: auto;
-    min-width: 300px;
-    min-height: 300px;
-    height: 350px;
-    width: 350px;
-    border-radius: 7px;
-    z-index: 19;
+    display: none;
+    transform: none;
+    border: none;
+    border-radius: 5px;
 }
 
-#message {}
+
+#message,
+#timer {
+    text-align: center;
+    font-family: monospace;
+    font-weight: bold;
+    text-transform: lowercase;
+    font-size: 18px;
+    color: #3b66a8;
+    margin: 24px auto;
+}
 
 .btngroup {
     position: absolute;
@@ -68,13 +62,14 @@
     height: 40px;
     width: 90%;
     margin: 10px auto;
-    color: #FFFFFF;
-    background-color: #5898fff0;
+    color: #EAF1FF;
+    background-color: #3079FF;
     border-radius: 5px;
     border: none;
 
 }
 
 #retake {
-    background-color: #d7d7d7e2;
+    color: #3079FF;
+    background-color: #EAF1FF;
 }
