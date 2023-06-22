@@ -260,8 +260,7 @@ const cameras = {
         } catch (error) {
           ctx.rect(cameras.translation(pred.topLeft[0], "OX"), cameras.translation(pred.topLeft[1], "OY"), pred.bottomRight[0] - pred.topLeft[0], pred.bottomRight[1] - pred.topLeft[1]);
         }
-        ctx.fill();
-        // ctx.stroke();
+        ctx.stroke();
       }
 
       if (showKeypoints) {
@@ -279,7 +278,7 @@ const cameras = {
 
         ctx.beginPath();
         ctx.strokeStyle = "#FFFFFF";
-        ctx.lineWidth = "2";
+        ctx.lineWidth = "1";
         ctx.filter = "blur(1px)";
 
         ctx.moveTo(cameras._canvas.width - 90, cameras._canvas.height / 2);
