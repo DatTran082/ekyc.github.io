@@ -203,11 +203,11 @@ const cameras = {
       if (prediction == undefined || prediction.length == 0) {
         this.reset();
         this._message.textContent = "không tìm thấy khuôn mặt trong khung hình";
-        cameras.drawImageScaled(cameras._videoLive, ctx, prediction, false, false, false);
+        cameras.canvasHelper.drawResult(cameras._videoLive, ctx, prediction, false, false, false);
       } else if (prediction.length > 1) {
         this.reset();
         this._message.textContent = "chỉ cho phép 1 khuôn mặt trong khung hình";
-        cameras.drawImageScaled(cameras._videoLive, ctx, prediction, true, false, false);
+        cameras.canvasHelper.drawResult(cameras._videoLive, ctx, prediction, true, false, false);
       } else {
         const probability = prediction[0].probability[0];
 
@@ -219,15 +219,15 @@ const cameras = {
         ) {
           this.reset();
           this._message.textContent = "Giữ cho khuôn mặt ở chính giữa và cách màn hình khoảng 30cm";
-          cameras.drawImageScaled(cameras._videoLive, ctx, prediction, true, true, false);
+          cameras.canvasHelper.drawResult(cameras._videoLive, ctx, prediction, true, true, false);
         } else if (probability < 0.995) {
           this.reset();
           this._message.textContent = "vui lòng giữ khuôn mặt cách màn hình khoảng 30cm và không bị che";
-          cameras.drawImageScaled(cameras._videoLive, ctx, prediction, false, true, true);
+          cameras.canvasHelper.drawResult(cameras._videoLive, ctx, prediction, false, true, true);
         } else {
           this.start();
           this._message.textContent = "";
-          cameras.drawImageScaled(cameras._videoLive, ctx, prediction, false, true, true);
+          cameras.canvasHelper.drawResult(cameras._videoLive, ctx, prediction, false, true, true);
         }
       }
     } catch (error) {
@@ -236,84 +236,86 @@ const cameras = {
       cameras._message.textContent = error.toString();
     }
   },
-  translation: function (pos, axis) {
-    switch (axis) {
-      case "OX":
-        return pos + cameras.standardDeviation.x;
-      case "OY":
-        return pos - cameras.standardDeviation.y;
-      default:
-        return { x: pos.x + cameras.standardDeviation.x, y: pos - cameras.standardDeviation.y };
-    }
-  },
-  roundRect: function (ctx, x, y, width, height, radius = 8, fill = false, stroke = true) {
-    if (typeof radius === "number") {
-      radius = { tl: radius, tr: radius, br: radius, bl: radius };
-    } else {
-      radius = { ...{ tl: 0, tr: 0, br: 0, bl: 0 }, ...radius };
-    }
-    ctx.beginPath();
-    ctx.moveTo(x + radius.tl, y);
-    ctx.lineTo(x + width - radius.tr, y);
-    ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
-    ctx.lineTo(x + width, y + height - radius.br);
-    ctx.quadraticCurveTo(x + width, y + height, x + width - radius.br, y + height);
-    ctx.lineTo(x + radius.bl, y + height);
-    ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
-    ctx.lineTo(x, y + radius.tl);
-    ctx.quadraticCurveTo(x, y, x + radius.tl, y);
-    ctx.closePath();
-    if (fill) {
-      ctx.fill();
-    }
-    if (stroke) {
-      // ctx.stroke();
-    }
-  },
-  drawImageScaled: function (frame, ctx, prediction, boundingBox, showKeypoints, showFaceLine) {
-    ctx.clearRect(0, 0, cameras._canvas.width, cameras._canvas.height);
+  canvasHelper: {
+    translation: function (pos, axis) {
+      switch (axis) {
+        case "OX":
+          return pos + cameras.standardDeviation.x;
+        case "OY":
+          return pos - cameras.standardDeviation.y;
+        default:
+          return { x: pos.x + cameras.standardDeviation.x, y: pos - cameras.standardDeviation.y };
+      }
+    },
+    roundRect: function (ctx, x, y, width, height, radius = 8, fill = false, stroke = true) {
+      if (typeof radius === "number") {
+        radius = { tl: radius, tr: radius, br: radius, bl: radius };
+      } else {
+        radius = { ...{ tl: 0, tr: 0, br: 0, bl: 0 }, ...radius };
+      }
+      ctx.beginPath();
+      ctx.moveTo(x + radius.tl, y);
+      ctx.lineTo(x + width - radius.tr, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
+      ctx.lineTo(x + width, y + height - radius.br);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius.br, y + height);
+      ctx.lineTo(x + radius.bl, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
+      ctx.lineTo(x, y + radius.tl);
+      ctx.quadraticCurveTo(x, y, x + radius.tl, y);
+      ctx.closePath();
+      if (fill) {
+        ctx.fill();
+      }
+      if (stroke) {
+        ctx.stroke();
+      }
+    },
+    drawResult: function (frame, ctx, prediction, boundingBox, showKeypoints, showFaceLine) {
+      ctx.clearRect(0, 0, cameras._canvas.width, cameras._canvas.height);
 
-    prediction.map((pred) => {
-      if (boundingBox) {
-        ctx.beginPath();
-        ctx.strokeStyle = "#FFFFFF";
-        ctx.lineWidth = "4";
+      prediction.map((pred) => {
+        if (boundingBox) {
+          ctx.beginPath();
+          ctx.strokeStyle = "#FFFFFF";
+          ctx.lineWidth = "4";
 
-        try {
-          ctx.roundRect(cameras.translation(pred.topLeft[0], "OX"), cameras.translation(pred.topLeft[1], "OY"), pred.bottomRight[0] - pred.topLeft[0], pred.bottomRight[1] - pred.topLeft[1], [8]);
-        } catch (error) {
-          cameras.roundRect(ctx, cameras.translation(pred.topLeft[0], "OX"), cameras.translation(pred.topLeft[1], "OY"), pred.bottomRight[0] - pred.topLeft[0], pred.bottomRight[1] - pred.topLeft[1], 8);
+          try {
+            ctx.roundRect(this.translation(pred.topLeft[0], "OX"), this.translation(pred.topLeft[1], "OY"), pred.bottomRight[0] - pred.topLeft[0], pred.bottomRight[1] - pred.topLeft[1], [8]);
+          } catch (error) {
+            this.roundRect(ctx, this.translation(pred.topLeft[0], "OX"), this.translation(pred.topLeft[1], "OY"), pred.bottomRight[0] - pred.topLeft[0], pred.bottomRight[1] - pred.topLeft[1], 8, false, false);
+          }
+
+          ctx.stroke();
         }
 
-        ctx.stroke();
-      }
+        if (showKeypoints) {
+          ctx.fillStyle = cameras.RED;
+          pred.landmarks.map((landmark) => {
+            ctx.fillRect(cameras.translation(landmark[0], "OX"), cameras.translation(landmark[1], "OY"), 4, 4);
+          });
+        }
 
-      if (showKeypoints) {
-        ctx.fillStyle = cameras.RED;
-        pred.landmarks.map((landmark) => {
-          ctx.fillRect(cameras.translation(landmark[0], "OX"), cameras.translation(landmark[1], "OY"), 4, 4);
-        });
-      }
+        if (showFaceLine) {
+          // const eye = { left: { x: this.translation(pred.landmarks[1][0], "OX"), y: this.translation(pred.landmarks[1][1], "OY") }, right: { x: this.translation(pred.landmarks[0][0], "OX"), y: this.translation(pred.landmarks[0][1], "OY") } };
+          // const ear = { left: { x: this.translation(pred.landmarks[5][0], "OX"), y: this.translation(pred.landmarks[5][1], "OY") }, right: { x: this.translation(pred.landmarks[4][0], "OX"), y: this.translation(pred.landmarks[4][1], "OY") } };
+          // const mouth = { x: this.translation(pred.landmarks[3][0], "OX"), y: this.translation(pred.landmarks[3][1], "OY") };
+          const nose = { x: this.translation(pred.landmarks[2][0], "OX"), y: this.translation(pred.landmarks[2][1], "OY") };
 
-      if (showFaceLine) {
-        // const eye = { left: { x: cameras.translation(pred.landmarks[1][0], "OX"), y: cameras.translation(pred.landmarks[1][1], "OY") }, right: { x: cameras.translation(pred.landmarks[0][0], "OX"), y: cameras.translation(pred.landmarks[0][1], "OY") } };
-        // const ear = { left: { x: cameras.translation(pred.landmarks[5][0], "OX"), y: cameras.translation(pred.landmarks[5][1], "OY") }, right: { x: cameras.translation(pred.landmarks[4][0], "OX"), y: cameras.translation(pred.landmarks[4][1], "OY") } };
-        // const mouth = { x: cameras.translation(pred.landmarks[3][0], "OX"), y: cameras.translation(pred.landmarks[3][1], "OY") };
-        const nose = { x: cameras.translation(pred.landmarks[2][0], "OX"), y: cameras.translation(pred.landmarks[2][1], "OY") };
+          ctx.beginPath();
+          ctx.strokeStyle = "#FFFFFF";
+          ctx.lineWidth = "1";
+          ctx.filter = "blur(1px)";
 
-        ctx.beginPath();
-        ctx.strokeStyle = "#FFFFFF";
-        ctx.lineWidth = "1";
-        ctx.filter = "blur(1px)";
+          ctx.moveTo(cameras._canvas.width - 90, cameras._canvas.height / 2);
+          ctx.quadraticCurveTo(nose.x, nose.y - 80, 90, cameras._canvas.height / 2);
+          ctx.moveTo(cameras._canvas.width / 2, 5);
+          ctx.quadraticCurveTo(nose.x, nose.y - 80, cameras._canvas.width / 2, cameras._canvas.height - 5);
 
-        ctx.moveTo(cameras._canvas.width - 90, cameras._canvas.height / 2);
-        ctx.quadraticCurveTo(nose.x, nose.y - 80, 90, cameras._canvas.height / 2);
-        ctx.moveTo(cameras._canvas.width / 2, 5);
-        ctx.quadraticCurveTo(nose.x, nose.y - 80, cameras._canvas.width / 2, cameras._canvas.height - 5);
-
-        ctx.stroke();
-      }
-    });
+          ctx.stroke();
+        }
+      });
+    },
   },
   detectFaces: async function () {
     try {
