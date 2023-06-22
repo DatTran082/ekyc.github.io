@@ -18,31 +18,23 @@
 
   <body>
     <form id="FaceAuthenForm">
-      <div id="timer">
-        <h3>
-          recording: 00:05
-        </h3>
-      </div>
+      <div id="timer"> <h3> Xác thực khuôn mặt </h3></div>
 
-      <div class="box">
-        <video class="video" autoplay muted playsinline id="videoLive"
-          width="650px" height="480px">
-        </video>
+      <div class="box" id="progressBar">
+        <video class="video" autoplay muted playsinline id="videoLive" width="650px" height="480px"> </video>
         <canvas id="canvas" class="canvas" width="650px" height="480px"></canvas>
 
-        <video class="preview" width="660px" height="480px" autoplay controls
-          playsinline style="display: none"
-          id="videoRecorded">
-        </video>
+        <video class="preview" width="650px" height="480px" autoplay controls playsinline style="display: none" id="videoRecorded"></video>
 
+        <div class="circular-progress"></div>
         <!-- <div id="loader" class="loader"></div> -->
       </div>
-      <div id="message">quay mặt theo hướng từ trái qua phải</div>
+      <div id="message">Đưa camera lại gần đến khi nhận diện được khuôn mặt</div>
 
       <div class="btngroup">
         <input id="faceRecord" type="file" name="videoFile" style="display: none;">
         <button type="button" id="retake">Thực hiện lại</button>
-        <button type="submit" id="confirm">Xác nhận</button>
+        <button type="button" id="confirm">Xác nhận</button>
       </div>
     </form>
 

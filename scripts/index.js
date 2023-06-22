@@ -75,6 +75,7 @@ const cameras = {
   GREEN: "#32EEDB",
   RED: "#FF2C35",
   BLUE: "#157AB3",
+  _progressBar: null,
   _faceRecord: null,
   _confirm: null,
   _retake: null,
@@ -86,7 +87,7 @@ const cameras = {
   _canvas: null,
   _loader: null,
   timer: null,
-  RECSECONDS: 5,
+  RECSECONDS: 6,
   faceVerify: false,
   isMediaRecorderSupported: false,
   preTrainModel: null,
@@ -95,7 +96,24 @@ const cameras = {
   stream: null,
   mediaRecorder: null,
   faceRunsInterval: null,
+  progressInterval: null,
   standardDeviation: { x: 0, y: 0 },
+  runProgressBar: function () {
+    let progressValue = 0;
+    const progressEndValue = 100;
+    const speed = 50;
+
+    clearInterval(cameras.progressInterval);
+
+    cameras.progressInterval = setInterval(() => {
+      progressValue++;
+      cameras._timer.textContent = `${progressValue}%`;
+      cameras._progressBar.style.background = `conic-gradient(#4d5bf9 ${progressValue * 3.6}deg,#cadcff ${progressValue * 3.6}deg)`;
+      if (progressValue == progressEndValue) {
+        clearInterval(cameras.progressInterval);
+      }
+    }, speed);
+  },
   generateUUID: function () {
     var d = new Date().getTime();
     var d2 = (typeof performance !== "undefined" && performance.now && performance.now() * 1000) || 0; //Time in microseconds since page-load or 0 if unsupported
@@ -113,8 +131,6 @@ const cameras = {
   },
   getMobileOperatingSystem: function () {
     const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-
-    console.log(userAgent);
 
     if (/windows phone/i.test(userAgent)) {
       return "Windows Phone";
@@ -137,7 +153,8 @@ const cameras = {
     this._videoRecorded = document.querySelector("#videoRecorded");
     this._timer = document.querySelector("#timer");
     this._message = document.querySelector("#message");
-    this._canvas = document.getElementById("canvas");
+    this._canvas = document.querySelector("#canvas");
+    this._progressBar = document.querySelector("#progressBar");
 
     this.timer = new _timerHandle(this.handleTimer);
     this.timer.reset(cameras.RECSECONDS);
@@ -184,7 +201,7 @@ const cameras = {
 
       if (options) {
         this.isMediaRecorderSupported = true;
-        this._message.textContent = "mimeType: " + options.mimeType;
+        this._message.textContent = "Đưa camera lại gần đến khi nhận diện được khuôn mặt";
         this.mediaRecorder = new MediaRecorder(cameras.stream, options);
       }
     } catch (error) {
@@ -363,6 +380,7 @@ const cameras = {
       if (cameras.timer.getStatus() == 0 && cameras.stream.active) {
         cameras.timer.start(1000);
         cameras.mediaRecorder.start();
+        cameras.runProgressBar();
       }
     } else {
       this._message.textContent = "MediaRecorder is not supported";
@@ -373,10 +391,12 @@ const cameras = {
       cameras.timer.stop();
       cameras.timer.reset(cameras.RECSECONDS);
       cameras.mediaRecorder.stop();
+      clearInterval(cameras.progressInterval);
 
       if (cameras.faceVerify) {
         this._videoLive.style = "display:block";
         this._canvas.style = "display:block";
+        this._progressBar.style = "display:block";
 
         this._videoRecorded.style = "display:none";
         this._confirm.style = "display:none";
@@ -390,6 +410,7 @@ const cameras = {
     if (this.isMediaRecorderSupported) {
       cameras.faceVerify = true;
       clearInterval(cameras.faceRunsInterval);
+      clearInterval(cameras.progressInterval);
 
       cameras.timer.stop();
       cameras.mediaRecorder.stop();
@@ -408,10 +429,11 @@ const cameras = {
     }
   },
   handleTimer: function (time) {
-    cameras._timer.textContent = "recording: " + time + " s";
+    // cameras._timer.textContent = "recording: " + time + " s";
     if (time == 0) {
       cameras.stop();
-      cameras._timer.textContent = "face recorded";
+      // cameras._timer.textContent = "face recorded";
+      cameras._message.textContent = "Quay khuôn mặt thànhh công";
     }
   },
 };
