@@ -75,6 +75,7 @@ const cameras = {
   GREEN: "#32EEDB",
   RED: "#FF2C35",
   BLUE: "#157AB3",
+  _faceRecord: null,
   _confirm: null,
   _retake: null,
   _faceAuthenForm: null,
@@ -114,6 +115,7 @@ const cameras = {
   },
   init: async function () {
     this._faceAuthenForm = document.querySelector("#FaceAuthenForm");
+    this._faceRecord = document.querySelector("#faceRecord");
     this._videoLive = document.querySelector("#videoLive");
     this._confirm = document.querySelector("#confirm");
     this._retake = document.querySelector("#retake");
@@ -198,11 +200,10 @@ const cameras = {
               var blob = new Blob(chunks, { type: "video/mp4" });
               cameras._faceAuthenForm.append("videoFile", blob, "video.mp4");
             } else {
-              // var input = document.getElementById("file-input");
-              // var file = new File([e.data], "mediaSource.webm", {type: "video/webm"});
-              // var dataTransfer = new DataTransfer();
-              // dataTransfer.items.add(file);
-              // input.files = dataTransfer.files;
+              const file = cameras.device === "IOS" ? new File(chunks, "mediaSource.mp4", { type: "video/mp4" }) : new File(chunks, "mediaSource.webm", { type: "video/webm" });
+              const dataTransfer = new DataTransfer();
+              dataTransfer.items.add(file);
+              cameras._faceRecord.files = dataTransfer.files;
             }
           }
         });
