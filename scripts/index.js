@@ -247,7 +247,7 @@ const cameras = {
           cameras.canvasHelper.drawResult(cameras._videoLive, ctx, prediction, false, true, true);
         } else {
           this.start();
-          this._message.textContent = "";
+          this._message.textContent = "quay mặt từ từ theo hướng từ trái qua phải";
           cameras.canvasHelper.drawResult(cameras._videoLive, ctx, prediction, false, true, true);
         }
       }
