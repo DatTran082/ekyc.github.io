@@ -233,7 +233,7 @@ const cameras = {
         }
       }
 
-      cameras.drawImageScaled(cameras.videoLive, ctx, prediction, true, false, true);
+      cameras.drawImageScaled(cameras._videoLive, ctx, prediction, true, false, true);
     } catch (error) {
       cameras.reset();
       console.log("error while draw prediction: ", error);
@@ -241,7 +241,7 @@ const cameras = {
     }
   },
   drawImageScaled: function (frame, ctx, prediction, boundingBox, showKeypoints, showFaceLine) {
-    ctx.clearRect(0, 0, cameras.canvas.width, cameras.canvas.height);
+    ctx.clearRect(0, 0, cameras._canvas.width, cameras._canvas.height);
 
     // const ratio = Math.min(cameras.canvas.width / frame.width, cameras.canvas.height / frame.height);
     // const centerShift_x = (cameras.canvas.width - frame.width * ratio) / 2;
@@ -325,7 +325,7 @@ const cameras = {
   detectFaces: async function () {
     try {
       // const estimationConfig = { flipHorizontal: true };
-      const prediction = await cameras.model.estimateFaces(cameras.videoLive, false);
+      const prediction = await cameras.model.estimateFaces(cameras._videoLive, false);
 
       cameras.processResults(cameras.ctx, prediction);
     } catch (error) {
@@ -351,8 +351,8 @@ const cameras = {
       cameras.timer.reset(cameras.RECSECONDS);
       cameras.mediaRecorder.stop();
 
-      cameras.videoRecorded.style = "display:none";
-      cameras.videoLive.style = "display:block";
+      cameras._videoRecorded.style = "display:none";
+      cameras._videoLive.style = "display:block";
 
       if (cameras.faceVerify) {
         //init Detectface
@@ -373,8 +373,8 @@ const cameras = {
         track.stop();
       });
 
-      cameras.videoRecorded.style = "display:block";
-      cameras.videoLive.style = "display:none";
+      cameras._videoRecorded.style = "display:block";
+      cameras._videoLive.style = "display:none";
     } else {
       this._message.textContent = "MediaRecorder is not supported";
     }
