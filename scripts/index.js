@@ -247,11 +247,6 @@ const cameras = {
     }
   },
   drawImageScaled: function (frame, ctx, prediction, boundingBox, showKeypoints, showFaceLine) {
-    // const ratio = Math.min(cameras.canvas.width / frame.width, cameras.canvas.height / frame.height);
-    // const centerShift_x = (cameras.canvas.width - frame.width * ratio) / 2;
-    // const centerShift_y = (cameras.canvas.height - frame.height * ratio) / 2;
-    // ctx.drawImage(frame, 0, 0, frame.width, frame.height, centerShift_x, centerShift_y, frame.width * ratio, frame.height * ratio);
-
     ctx.clearRect(0, 0, cameras._canvas.width, cameras._canvas.height);
 
     prediction.map((pred) => {
@@ -281,10 +276,8 @@ const cameras = {
         ctx.lineWidth = "3";
         ctx.filter = "blur(1px)";
 
-        //horizon parabol
         ctx.moveTo(cameras._canvas.width - 90, cameras._canvas.height / 2);
         ctx.quadraticCurveTo(nose.x, nose.y - 80, 90, cameras._canvas.height / 2);
-        //vertical parabol
         ctx.moveTo(cameras._canvas.width / 2, 5);
         ctx.quadraticCurveTo(nose.x, nose.y - 80, cameras._canvas.width / 2, cameras._canvas.height - 5);
 
