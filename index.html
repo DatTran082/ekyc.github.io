@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="./styles/style.css">
+    <link rel="stylesheet" href="./styles/newstyle.css">
     <script src="./models/jsdelivr.net_npm_@tensorflow_tfjs"></script>
     <script src="./models/jsdelivr.net_npm_@tensorflow-models_blazeface"></script>
 
@@ -18,10 +18,11 @@
 
   <body>
     <form id="FaceAuthenForm">
-      <h3>quay mặt theo hướng từ trái qua phải
-        <div id="timer">recording: 00:05</div>
-        <div id="message">...</div>
-      </h3>
+      <div id="timer">
+        <h3>
+          recording: 00:05
+        </h3>
+      </div>
 
       <div class="box">
         <video class="video" autoplay muted playsinline id="videoLive"
@@ -36,6 +37,8 @@
 
         <!-- <div id="loader" class="loader"></div> -->
       </div>
+      <div id="message">quay mặt theo hướng từ trái qua phải</div>
+
       <div class="btngroup">
         <button type="button" id="retake">Thực hiện lại</button>
         <button type="submit" id="confirm">Xác nhận</button>

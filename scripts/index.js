@@ -183,28 +183,30 @@ const cameras = {
         cameras.faceRunsInterval = setInterval(this.detectFaces, 50);
       });
 
-      this.mediaRecorder.addEventListener("dataavailable", (e) => {
-        if (this.faceVerify == true) {
-          this._videoRecorded.src = URL.createObjectURL(e.data);
+      if (cameras.isMediaRecorderSupported) {
+        cameras.mediaRecorder.addEventListener("dataavailable", (e) => {
+          if (this.faceVerify == true) {
+            this._videoRecorded.src = URL.createObjectURL(e.data);
 
-          const chunks = [];
-          chunks.push(e.data);
+            const chunks = [];
+            chunks.push(e.data);
 
-          if (cameras.device === "ANDROID") {
-            let blob = new Blob(chunks, { type: "video/webm" });
-            cameras._faceAuthenForm.append("videoFile", blob, "video.webm");
-          } else if (this.device === "IOS") {
-            var blob = new Blob(chunks, { type: "video/mp4" });
-            cameras._faceAuthenForm.append("videoFile", blob, "video.mp4");
-          } else {
-            // var input = document.getElementById("file-input");
-            // var file = new File([e.data], "mediaSource.webm", {type: "video/webm"});
-            // var dataTransfer = new DataTransfer();
-            // dataTransfer.items.add(file);
-            // input.files = dataTransfer.files;
+            if (cameras.device === "ANDROID") {
+              let blob = new Blob(chunks, { type: "video/webm" });
+              cameras._faceAuthenForm.append("videoFile", blob, "video.webm");
+            } else if (this.device === "IOS") {
+              var blob = new Blob(chunks, { type: "video/mp4" });
+              cameras._faceAuthenForm.append("videoFile", blob, "video.mp4");
+            } else {
+              // var input = document.getElementById("file-input");
+              // var file = new File([e.data], "mediaSource.webm", {type: "video/webm"});
+              // var dataTransfer = new DataTransfer();
+              // dataTransfer.items.add(file);
+              // input.files = dataTransfer.files;
+            }
           }
-        }
-      });
+        });
+      }
 
       this._retake.addEventListener("click", function () {
         if (cameras.faceVerify && cameras.stream.active == false) {
