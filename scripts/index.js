@@ -254,8 +254,14 @@ const cameras = {
         ctx.beginPath();
         ctx.strokeStyle = "#FFFFFF";
         ctx.lineWidth = "4";
-        ctx.roundRect(cameras.translation(pred.topLeft[0], "OX"), cameras.translation(pred.topLeft[1], "OY"), pred.bottomRight[0] - pred.topLeft[0], pred.bottomRight[1] - pred.topLeft[1], [8]);
-        ctx.stroke();
+
+        try {
+          ctx.roundRect(cameras.translation(pred.topLeft[0], "OX"), cameras.translation(pred.topLeft[1], "OY"), pred.bottomRight[0] - pred.topLeft[0], pred.bottomRight[1] - pred.topLeft[1], [8.0]);
+        } catch (error) {
+          ctx.rect(cameras.translation(pred.topLeft[0], "OX"), cameras.translation(pred.topLeft[1], "OY"), pred.bottomRight[0] - pred.topLeft[0], pred.bottomRight[1] - pred.topLeft[1]);
+        }
+        ctx.fill();
+        // ctx.stroke();
       }
 
       if (showKeypoints) {
