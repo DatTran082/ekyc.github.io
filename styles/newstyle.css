@@ -19,12 +19,19 @@
     right: 0;
     height: 95%;
     width: 95%;
+    margin: auto;
     object-fit: cover;
     display: block;
     border-radius: 50%;
     border: 4px solid #8ab5f8;
     z-index: 9;
     transform: scale(-1, 1);
+}
+
+.preview {
+    transform: none;
+    border: none;
+    border-radius: 5px;
 }
 
 
