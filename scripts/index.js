@@ -76,6 +76,8 @@ const cameras = {
   RED: "#FF2C35",
   BLUE: "#157AB3",
   _confirm: null,
+  _retake: null,
+  _faceAuthenForm: null,
   _videoLive: null,
   _videoRecorded: null,
   _message: null,
@@ -111,8 +113,10 @@ const cameras = {
     return "unknown";
   },
   init: async function () {
+    this._faceAuthenForm = document.querySelector("#FaceAuthenForm");
     this._videoLive = document.querySelector("#videoLive");
     this._confirm = document.querySelector("#confirm");
+    this._retake = document.querySelector("#retake");
     this._videoRecorded = document.querySelector("#videoRecorded");
     this._timer = document.querySelector("#timer");
     this._message = document.querySelector("#message");
@@ -134,35 +138,22 @@ const cameras = {
       console.log("init faceDetection failure: ", error);
     }
 
+    await cameras.startStream();
+
+    cameras.handleEvent();
+  },
+  startStream: async function () {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
+      cameras.stream = await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: { facingMode: "user" },
       });
 
-      this._videoLive.srcObject = stream;
-      this.stream = stream;
+      this._videoLive.srcObject = cameras.stream;
 
-      this._videoLive.addEventListener("loadeddata", async () => {
-        if (this.faceRunsInterval) {
-          clearInterval(this.faceRunsInterval);
-          console.log("clear faceRunsInterval");
-        } else {
-          console.log("init faceRunsInterval");
-          this.faceRunsInterval = setInterval(this.detectFaces, 50);
-        }
-      });
-
-      this.handleEvent();
-    } catch (error) {
-      console.log("init camera stream failure: ", error);
-    }
-  },
-  handleEvent: async function () {
-    try {
-      var options;
+      let options;
       if (MediaRecorder.isTypeSupported("video/mp4")) {
-        options = { mimeType: "video/mp4" }; // videoBitsPerSecond: 100000
+        options = { mimeType: "video/mp4" };
       } else if (MediaRecorder.isTypeSupported("video/webm")) {
         options = { mimeType: "video/webm" };
       } else if (MediaRecorder.isTypeSupported("video/webm; codecs=vp8")) {
@@ -179,26 +170,54 @@ const cameras = {
         this._message.textContent = "mimeType: " + options.mimeType;
         this.mediaRecorder = new MediaRecorder(cameras.stream, options);
       }
+    } catch (error) {
+      console.log("init camera stream failure: ", error);
+      this._message.textContent = "init camera stream failure: " + error.toString();
+    }
+  },
+  handleEvent: function () {
+    try {
+      this._videoLive.addEventListener("loadeddata", async () => {
+        if (this.faceRunsInterval) clearInterval(this.faceRunsInterval);
+
+        cameras.faceRunsInterval = setInterval(this.detectFaces, 50);
+      });
 
       this.mediaRecorder.addEventListener("dataavailable", (e) => {
         if (this.faceVerify == true) {
           this._videoRecorded.src = URL.createObjectURL(e.data);
-          this._canvas.style = "display:none";
-          this._confirm.style = "display:block";
 
-          if (this.device === "ANDROID") {
-            // var blob = new Blob(e.data, { type: "video/mp4" });
-            // this.videoRecorded.src = URL.createObjectURL(blob); //
+          const chunks = [];
+          chunks.push(e.data);
+
+          if (cameras.device === "ANDROID") {
+            let blob = new Blob(chunks, { type: "video/webm" });
+            cameras._faceAuthenForm.append("videoFile", blob, "video.webm");
+          } else if (this.device === "IOS") {
+            var blob = new Blob(chunks, { type: "video/mp4" });
+            cameras._faceAuthenForm.append("videoFile", blob, "video.mp4");
+          } else {
+            // var input = document.getElementById("file-input");
+            // var file = new File([e.data], "mediaSource.webm", {type: "video/webm"});
+            // var dataTransfer = new DataTransfer();
+            // dataTransfer.items.add(file);
+            // input.files = dataTransfer.files;
           }
         }
       });
+
+      this._retake.addEventListener("onClick", function () {
+        if (cameras.faceVerify && cameras.stream.active == false) {
+          cameras.startStream();
+          cameras.reset();
+        }
+      });
     } catch (error) {
-      this._message.textContent = "MediaRecorder is not supported: " + error.toString();
+      this._message.textContent = error.toString();
       console.log(error);
     }
   },
   processResults: function (ctx, prediction) {
-    // console.log("pred => ", prediction);
     try {
       if (prediction == undefined || prediction.length == 0) {
         this.reset();
@@ -344,11 +363,13 @@ const cameras = {
       cameras.timer.reset(cameras.RECSECONDS);
       cameras.mediaRecorder.stop();
 
-      cameras._videoRecorded.style = "display:none";
-      cameras._videoLive.style = "display:block";
-
       if (cameras.faceVerify) {
-        //init Detectface
+        this._videoLive.style = "display:block";
+        this._canvas.style = "display:block";
+
+        this._videoRecorded.style = "display:none";
+        this._confirm.style = "display:none";
+        this._retake.style = "display:none";
       }
     } else {
       this._message.textContent = "MediaRecorder is not supported";
@@ -356,18 +377,21 @@ const cameras = {
   },
   stop: function () {
     if (this.isMediaRecorderSupported) {
+      cameras.faceVerify = true;
       clearInterval(cameras.faceRunsInterval);
 
       cameras.timer.stop();
       cameras.mediaRecorder.stop();
-      cameras.faceVerify = true;
-
       cameras.stream.getTracks().forEach(function (track) {
         track.stop();
       });
 
-      cameras._videoRecorded.style = "display:block";
-      cameras._videoLive.style = "display:none";
+      this._videoLive.style = "display:none";
+      this._canvas.style = "display:none";
+
+      this._videoRecorded.style = "display:block";
+      this._confirm.style = "display:block";
+      this._retake.style = "display:block";
     } else {
       this._message.textContent = "MediaRecorder is not supported";
     }
