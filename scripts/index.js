@@ -280,9 +280,9 @@ const cameras = {
         ctx.lineWidth = "4";
 
         try {
-          cameras.roundRect(ctx, cameras.translation(pred.topLeft[0], "OX"), cameras.translation(pred.topLeft[1], "OY"), pred.bottomRight[0] - pred.topLeft[0], pred.bottomRight[1] - pred.topLeft[1], 8);
+          ctx.roundRect(cameras.translation(pred.topLeft[0], "OX"), cameras.translation(pred.topLeft[1], "OY"), pred.bottomRight[0] - pred.topLeft[0], pred.bottomRight[1] - pred.topLeft[1], [8]);
         } catch (error) {
-          // ctx.roundRect(cameras.translation(pred.topLeft[0], "OX"), cameras.translation(pred.topLeft[1], "OY"), pred.bottomRight[0] - pred.topLeft[0], pred.bottomRight[1] - pred.topLeft[1], [8]);
+          cameras.roundRect(ctx, cameras.translation(pred.topLeft[0], "OX"), cameras.translation(pred.topLeft[1], "OY"), pred.bottomRight[0] - pred.topLeft[0], pred.bottomRight[1] - pred.topLeft[1], 8);
         }
 
         ctx.stroke();
