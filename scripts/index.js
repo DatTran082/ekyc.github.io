@@ -1,8 +1,8 @@
 function _timerHandle(callback) {
-  var time = 0; //  The default time of the timer
-  var mode = 1; //    Mode: count up or count down
-  var status = 0; //    Status: timer is running or stoped
-  var timer_id; //    This is used by setInterval function
+  let time = 0;
+  let mode = 1;
+  let status = 0;
+  let timer_id;
 
   this.start = function (interval) {
     interval = typeof interval !== "undefined" ? interval : 1000;
@@ -98,52 +98,6 @@ const cameras = {
   faceRunsInterval: null,
   progressInterval: null,
   standardDeviation: { x: 0, y: 0 },
-  runProgressBar: function () {
-    let progressValue = 0;
-    const progressEndValue = 100;
-    const speed = 50;
-
-    clearInterval(cameras.progressInterval);
-
-    cameras.progressInterval = setInterval(() => {
-      progressValue++;
-      cameras._timer.textContent = `${progressValue}%`;
-      cameras._progressBar.style.background = `conic-gradient(#4d5bf9 ${progressValue * 3.6}deg,#cadcff ${progressValue * 3.6}deg)`;
-      if (progressValue == progressEndValue) {
-        clearInterval(cameras.progressInterval);
-      }
-    }, speed);
-  },
-  generateUUID: function () {
-    var d = new Date().getTime();
-    var d2 = (typeof performance !== "undefined" && performance.now && performance.now() * 1000) || 0; //Time in microseconds since page-load or 0 if unsupported
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-      var r = Math.random() * 16;
-      if (d > 0) {
-        r = (d + r) % 16 | 0;
-        d = Math.floor(d / 16);
-      } else {
-        r = (d2 + r) % 16 | 0;
-        d2 = Math.floor(d2 / 16);
-      }
-      return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
-    });
-  },
-  getMobileOperatingSystem: function () {
-    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-
-    if (/windows phone/i.test(userAgent)) {
-      return "Windows Phone";
-    }
-    if (/android/i.test(userAgent)) {
-      return "ANDROID";
-    }
-    if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
-      return "IOS";
-    }
-
-    return "unknown";
-  },
   init: async function () {
     this._faceAuthenForm = document.querySelector("#FaceAuthenForm");
     this._faceRecord = document.querySelector("#faceRecord");
@@ -175,6 +129,41 @@ const cameras = {
     await cameras.startStream();
 
     cameras.handleEvent();
+  },
+  handleEvent: function () {
+    try {
+      this._videoLive.addEventListener("loadeddata", async () => {
+        if (this.faceRunsInterval) clearInterval(this.faceRunsInterval);
+        console.log(cameras.device);
+        cameras.faceRunsInterval = setInterval(this.detectFaces, 100);
+      });
+
+      if (cameras.isMediaRecorderSupported) {
+        cameras.mediaRecorder.addEventListener("dataavailable", (e) => {
+          if (this.faceVerify == true) {
+            this._videoRecorded.src = URL.createObjectURL(e.data);
+
+            const chunks = [];
+            chunks.push(e.data);
+            const fileName = cameras.generateUUID();
+
+            const file = cameras.device === "IOS" ? new File(chunks, `${fileName}.mp4`, { type: "video/mp4" }) : new File(chunks, `${fileName}.webm`, { type: "video/webm" });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            cameras._faceRecord.files = dataTransfer.files;
+          }
+        });
+      }
+
+      this._retake.addEventListener("click", function () {
+        if (cameras.faceVerify && cameras.stream.active == false) {
+          cameras.startStream();
+          cameras.reset();
+        }
+      });
+    } catch (error) {
+      this._message.textContent = error.toString();
+    }
   },
   startStream: async function () {
     try {
@@ -209,71 +198,34 @@ const cameras = {
       this._message.textContent = "init camera stream failure: " + error.toString();
     }
   },
-  handleEvent: function () {
+  detectFaces: async function () {
     try {
-      this._videoLive.addEventListener("loadeddata", async () => {
-        if (this.faceRunsInterval) clearInterval(this.faceRunsInterval);
+      // const estimationConfig = { flipHorizontal: true };
+      const prediction = await cameras.preTrainModel.estimateFaces(cameras._videoLive, false);
 
-        cameras.faceRunsInterval = setInterval(this.detectFaces, 50);
-      });
-
-      if (cameras.isMediaRecorderSupported) {
-        cameras.mediaRecorder.addEventListener("dataavailable", (e) => {
-          if (this.faceVerify == true) {
-            this._videoRecorded.src = URL.createObjectURL(e.data);
-
-            const chunks = [];
-            chunks.push(e.data);
-            const fileName = cameras.generateUUID();
-
-            const file = cameras.device === "IOS" ? new File(chunks, `${fileName}.mp4`, { type: "video/mp4" }) : new File(chunks, `${fileName}.webm`, { type: "video/webm" });
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-            cameras._faceRecord.files = dataTransfer.files;
-          }
-        });
-      }
-
-      this._retake.addEventListener("click", function () {
-        if (cameras.faceVerify && cameras.stream.active == false) {
-          cameras.startStream();
-          cameras.reset();
-        }
-      });
+      cameras.processResults(cameras.ctx, prediction);
     } catch (error) {
-      this._message.textContent = error.toString();
-      console.log(error);
+      console.log("preTrainModel not found: ", error);
+      // clearInterval(cameras.faceRunsInterval);
     }
   },
   processResults: function (ctx, prediction) {
     try {
       if (prediction == undefined || prediction.length == 0) {
-        this.reset();
-        this._message.textContent = "không tìm thấy khuôn mặt trong khung hình";
+        this.reset("không tìm thấy khuôn mặt trong khung hình");
         cameras.canvasHelper.drawResult(cameras._videoLive, ctx, prediction, false, false, false);
       } else if (prediction.length > 1) {
-        this.reset();
-        this._message.textContent = "chỉ cho phép 1 khuôn mặt trong khung hình";
+        this.reset("chỉ cho phép 1 khuôn mặt trong khung hình");
         cameras.canvasHelper.drawResult(cameras._videoLive, ctx, prediction, true, false, false);
       } else {
         const probability = prediction[0].probability[0];
 
-        if (
-          prediction[0].topLeft[0] < 30 || //x->
-          prediction[0].topLeft[0] > 290 || //x<-
-          prediction[0].topLeft[1] < 0 || //y->
-          prediction[0].topLeft[1] > 250 //y-<
-        ) {
-          this.reset();
-          this._message.textContent = "Giữ cho khuôn mặt ở chính giữa và cách màn hình khoảng 30cm";
+        if (prediction[0].topLeft[0] < 30 || prediction[0].topLeft[0] > 290 || prediction[0].topLeft[1] < 0 || prediction[0].topLeft[1] > 250 || probability < 0.995) {
+          this.reset("Đưa camera lại gần khuôn mặt");
           cameras.canvasHelper.drawResult(cameras._videoLive, ctx, prediction, true, true, false);
-        } else if (probability < 0.995) {
-          this.reset();
-          this._message.textContent = "vui lòng giữ khuôn mặt cách màn hình khoảng 30cm và không bị che";
-          cameras.canvasHelper.drawResult(cameras._videoLive, ctx, prediction, false, true, true);
         } else {
           this.start();
-          this._message.textContent = "quay mặt từ từ theo hướng từ trái qua phải";
+          this._message.textContent = "Quay mặt từ từ theo hướng từ phải qua trái";
           cameras.canvasHelper.drawResult(cameras._videoLive, ctx, prediction, false, true, true);
         }
       }
@@ -364,16 +316,51 @@ const cameras = {
       });
     },
   },
-  detectFaces: async function () {
-    try {
-      // const estimationConfig = { flipHorizontal: true };
-      const prediction = await cameras.preTrainModel.estimateFaces(cameras._videoLive, false);
+  runProgressBar: function () {
+    let progressValue = 0;
+    const progressEndValue = 100;
+    const speed = 50;
 
-      cameras.processResults(cameras.ctx, prediction);
-    } catch (error) {
-      console.log("preTrainModel not found: ", error);
-      // clearInterval(cameras.faceRunsInterval);
+    clearInterval(cameras.progressInterval);
+
+    cameras.progressInterval = setInterval(() => {
+      progressValue++;
+      cameras._timer.textContent = `${progressValue}%`;
+      cameras._progressBar.style.background = `conic-gradient(#4d5bf9 ${progressValue * 3.6}deg,#cadcff ${progressValue * 3.6}deg)`;
+      if (progressValue == progressEndValue) {
+        clearInterval(cameras.progressInterval);
+      }
+    }, speed);
+  },
+  generateUUID: function () {
+    var d = new Date().getTime();
+    var d2 = (typeof performance !== "undefined" && performance.now && performance.now() * 1000) || 0;
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+      var r = Math.random() * 16;
+      if (d > 0) {
+        r = (d + r) % 16 | 0;
+        d = Math.floor(d / 16);
+      } else {
+        r = (d2 + r) % 16 | 0;
+        d2 = Math.floor(d2 / 16);
+      }
+      return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+    });
+  },
+  getMobileOperatingSystem: function () {
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+    if (/windows phone/i.test(userAgent)) {
+      return "Windows Phone";
     }
+    if (/android/i.test(userAgent)) {
+      return "ANDROID";
+    }
+    if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+      return "IOS";
+    }
+
+    return "unknown";
   },
   start: function () {
     if (this.isMediaRecorderSupported) {
@@ -386,7 +373,9 @@ const cameras = {
       this._message.textContent = "MediaRecorder is not supported";
     }
   },
-  reset: function () {
+  reset: function (message = "") {
+    cameras._message.textContent = message;
+
     if (this.isMediaRecorderSupported) {
       cameras.timer.stop();
       cameras.timer.reset(cameras.RECSECONDS);
@@ -432,7 +421,6 @@ const cameras = {
     // cameras._timer.textContent = "recording: " + time + " s";
     if (time == 0) {
       cameras.stop();
-      // cameras._timer.textContent = "face recorded";
       cameras._message.textContent = "Quay khuôn mặt thànhh công";
     }
   },
