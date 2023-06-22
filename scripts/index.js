@@ -292,7 +292,7 @@ const cameras = {
         if (showKeypoints) {
           ctx.fillStyle = cameras.RED;
           pred.landmarks.map((landmark) => {
-            ctx.fillRect(cameras.translation(landmark[0], "OX"), cameras.translation(landmark[1], "OY"), 4, 4);
+            ctx.fillRect(this.translation(landmark[0], "OX"), this.translation(landmark[1], "OY"), 4, 4);
           });
         }
 
