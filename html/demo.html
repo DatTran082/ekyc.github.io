@@ -4,33 +4,72 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="text/javascript" src="https://mvnpt.amft.vn/webcamjs/webcam.min.js"></script>
     <title>Document</title>
   </head>
-
-  <style>
-      .progress-bar {
-        width: 100%;
-        height: 20px;
-        background-color: #f2f2f2;
-        position: relative;
-      }
-       
-      .progress {
-        height: 100%;
-        background-color: #4caf50;
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 0%;
-      }
-      </style>
   <body>
-    <div class="progress-bar">
-      <div class="progress"></div>
+    <div id="my_camera"></div>
+
+    <div id="pre_take_buttons" class="button-container" style="margin-top:15px;">
+      <input type=button value="Xem trước ảnh" onClick="preview_snapshot()" class="button">
     </div>
+    <div id="post_take_buttons" style="display: none; margin-top: 15px;" class="button-container">
+      <input type=button value="&lt; Chụp lại" onClick="cancel_preview()" class="button">
+      <input type=button value="Lưu ảnh &gt;" onClick="save_photo()" style="font-weight:bold;" class="button">
+    </div>
+    <input id="mydata" type="hidden" name="mydata" value />
 
-    <span class="countdown"></span>
+    <!-- Script -->
 
+    <!-- Code to handle taking the snapshot and displaying it locally -->
+    <script language="JavaScript">
+      Webcam.set({
+            
+            image_format: 'jpeg',
+            jpeg_quality: 90
+
+
+        });
+        Webcam.attach('#my_camera');
+
+
+      function preview_snapshot() {
+          // freeze camera so user can preview pic
+          Webcam.freeze();
+
+          // swap button sets
+          document.getElementById('pre_take_buttons').style.display = 'none';
+          document.getElementById('post_take_buttons').style.display = '';
+      }
+
+      function cancel_preview() {
+          // cancel preview freeze and return to live camera feed
+          Webcam.unfreeze();
+
+          // swap buttons back
+          document.getElementById('pre_take_buttons').style.display = '';
+          document.getElementById('post_take_buttons').style.display = 'none';
+      }
+
+
+      function save_photo() {
+
+          Webcam.snap(function (data_uri) {
+
+              document.getElementById('mydata').value = data_uri;
+              document.getElementById('AndroidFaceAuthenForm').submit();
+
+              // swap buttons back
+              document.getElementById('pre_take_buttons').style.display = '';
+              document.getElementById('post_take_buttons').style.display = 'none';
+
+              callhandlelogEvent('7_TrangXacThucKhuonMat_ClickButton_Xong', '7_TrangXacThucKhuonMat_ClickButton_Xong', '7_TrangXacThucKhuonMat_ClickButton_Xong');
+              LoadingAnimation.display();
+          });
+
+
+      }
+  </script>
   </body>
-  <script src="../scripts/demo.js"></script>
+
 </html>
