@@ -71,6 +71,47 @@ function _timerHandle(callback) {
   }
 }
 
+const LoadingAnimation = {
+  renderStyle: function () {
+    $("body").append(`
+          <style>
+              .container-loader {position: fixed;width: 100%;top: 0;bottom: 0;display: none;background-color: rgb(0 0 0 / 0.4);justify-content: center;align-items: center;z-index:99999;}
+              .loading i {width: 20px;height: 20px; display: inline-block;border-radius: 50%; background: #D92727;}
+              .loading i:first-child {animation: loading-ani2 0.5s linear infinite; opacity: 0;transform: translate(-20px); }
+              .loading i:nth-child(2),
+              .loading i:nth-child(3) { animation: loading-ani3 0.5s linear infinite;}
+              .loading i:last-child { animation: loading-ani1 0.5s linear infinite;}
+              @keyframes loading-ani1 {100% { transform: translate(40px);opacity: 0;}}
+              @keyframes loading-ani2 {100% {transform: translate(20px); opacity: 1;}}
+              @keyframes loading-ani3 {100% {transform: translate(20px);}}
+              @media only screen and (min-width: 500px) {.container-loader {width: 500px;} .profile-layout .modal-screen { max-width: 500px;} }
+          </style>
+      `);
+  },
+  renderElement: function () {
+    $("body").append(`
+          <div class="container-loader">
+              <div class="loading"><i></i><i></i><i></i><i></i></div>
+                <div class="ani1"><i></i><i></i><i></i></div>
+                <div class="ani2"><i></i><i></i><i></i></div>
+                <div class="ani3"><i></i><i></i><i></i></div>
+                <div class="ani4"><i></i><i></i><i></i></div>
+          </div>
+      `);
+  },
+  display: function () {
+    document.querySelector(".container-loader").style.display = "flex";
+  },
+  dispose: function () {
+    document.querySelector(".container-loader").style.display = "none";
+  },
+  start: function () {
+    this.renderStyle();
+    this.renderElement();
+    this.dispose();
+  },
+};
+
 const cameras = {
   GREEN: "#32EEDB",
   RED: "#FF2C35",
