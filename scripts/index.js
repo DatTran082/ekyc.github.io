@@ -73,7 +73,8 @@ function _timerHandle(callback) {
 
 const LoadingAnimation = {
   renderStyle: function () {
-    $("body").append(`
+    appendChild(node);
+    document.querySelector("body").append(`
           <style>
               .container-loader {position: fixed;width: 100%;top: 0;bottom: 0;display: none;background-color: rgb(0 0 0 / 0.4);justify-content: center;align-items: center;z-index:99999;}
               .loading i {width: 20px;height: 20px; display: inline-block;border-radius: 50%; background: #D92727;}
@@ -89,7 +90,7 @@ const LoadingAnimation = {
       `);
   },
   renderElement: function () {
-    $("body").append(`
+    document.querySelector("body").append(`
           <div class="container-loader">
               <div class="loading"><i></i><i></i><i></i><i></i></div>
                 <div class="ani1"><i></i><i></i><i></i></div>
@@ -218,7 +219,7 @@ const cameras = {
 
         Webcam.on("live", function () {
           if (this.faceRunsInterval) clearInterval(cameras.faceRunsInterval);
-          cameras.faceRunsInterval = setInterval(cameras.detectFaces, 100);
+          cameras.faceRunsInterval = setInterval(cameras.detectFaces, 50);
         });
 
         Webcam.on("error", function (err) {
@@ -299,7 +300,9 @@ const cameras = {
           cameras.canvasHelper.drawResult(cameras._videoLive, ctx, prediction, true, true, false);
         } else {
           this.start();
-          this._message.textContent = cameras.device === "IOS" ? "Quay mặt từ từ theo hướng từ phải qua trái" : `Giữ khuôn mặt ở chính giữa khung hình trong ${this.timer.getTime()}s`;
+          this._message.textContent = cameras.device === "IOS" ? "Quay mặt từ từ theo hướng từ phải qua trái" : `Giữ khuôn mặt ở chính giữa khung hình`;
+          if (cameras.device !== "IOS") this._timer.textContent = ((cameras.RECSECONDS - cameras.timer.getTime()) / cameras.RECSECONDS) * 100 + "%";
+
           cameras.canvasHelper.drawResult(cameras._videoLive, ctx, prediction, false, true, true);
         }
       }
@@ -407,7 +410,7 @@ const cameras = {
 
     cameras.progressInterval = setInterval(() => {
       progressValue++;
-      cameras.canvasHelper.drawCircle(cameras.ctx, progressValue / 100);
+      // cameras.canvasHelper.drawCircle(cameras.ctx, progressValue / 100);
       cameras._timer.textContent = `${progressValue}%`;
       cameras._progressBar.style.background = `conic-gradient(#4d5bf9 ${progressValue * 3.6}deg,#cadcff ${progressValue * 3.6}deg)`;
       if (progressValue == progressEndValue) {
@@ -447,10 +450,10 @@ const cameras = {
   },
   start: function () {
     if (cameras.timer.getStatus() == 0 && cameras.faceVerify == false) {
-      cameras.runProgressBar();
       cameras.timer.start(1000);
 
       if (cameras.device === "IOS" && cameras.isMediaRecorderSupported && cameras.stream.active) {
+        cameras.runProgressBar();
         cameras.mediaRecorder.start();
       }
     }
@@ -493,12 +496,19 @@ const cameras = {
       this._videoRecorded.style = "display:block";
     } else {
       Webcam.freeze();
-      Webcam.snap(async function (data_uri, canvas, context) {
+      Webcam.snap(async function (data_uri, frame, context) {
         clearInterval(cameras.faceRunsInterval);
         const prediction = await cameras.preTrainModel.estimateFaces(canvas, false);
         console.log(prediction);
         cameras._faceRecord.value = data_uri;
-        cameras.ctx.drawImage(canvas, 0, 0, cameras._canvas.width, cameras._canvas.height);
+        // cameras.ctx.drawImage(canvas, 0, 0, cameras._canvas.width, cameras._canvas.height);
+
+        const ratio = Math.min(cameras._canvas.width / frame.width, cameras._canvas.height / frame.height);
+        const centerShift_x = (cameras._canvas.width - frame.width * ratio) / 2;
+        const centerShift_y = (cameras._canvas.height - frame.height * ratio) / 2;
+
+        ctx.clearRect(0, 0, cameras._canvas.width, cameras._canvas.height);
+        ctx.drawImage(frame, 0, 0, frame.width, frame.height, centerShift_x, centerShift_y, frame.width * ratio, frame.height * ratio);
       });
 
       Webcam.reset();

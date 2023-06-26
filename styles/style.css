@@ -1,8 +1,8 @@
 * {
     padding: 0;
     margin: 0;
-    font-family: monospace;
-
+    font-family: sans-serif;
+    color: #34404B;
 }
 
 
@@ -41,21 +41,25 @@
 
 .preview {
     display: none;
-    transform: none;
-    border: 4px solid #FFFFFF;
-    border-radius: 12px;
+    border: 4px solid #3079FF;
 }
 
 
 #message,
 #timer {
     text-align: center;
-    font-weight: bold;
+    font-weight: 600;
     text-transform: lowercase;
-    font-size: 18px;
-    color: #3b66a8;
+    font-size: medium;
     margin: 24px auto;
     width: calc(100% - 48px);
+}
+
+#header {
+    text-align: center;
+    font-weight: bold;
+    font-size: 16px;
+    margin-top: 24px;
 }
 
 
