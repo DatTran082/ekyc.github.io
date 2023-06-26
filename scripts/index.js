@@ -112,6 +112,38 @@ const LoadingAnimation = {
   },
 };
 
+function preview_snapshot() {
+  // freeze camera so user can preview pic
+  Webcam.freeze();
+
+  // swap button sets
+  document.getElementById("pre_take_buttons").style.display = "none";
+  document.getElementById("post_take_buttons").style.display = "";
+}
+
+function cancel_preview() {
+  // cancel preview freeze and return to live camera feed
+  Webcam.unfreeze();
+
+  // swap buttons back
+  document.getElementById("pre_take_buttons").style.display = "";
+  document.getElementById("post_take_buttons").style.display = "none";
+}
+
+function save_photo() {
+  Webcam.snap(function (data_uri) {
+    document.getElementById("mydata").value = data_uri;
+    document.getElementById("AndroidFaceAuthenForm").submit();
+
+    // swap buttons back
+    document.getElementById("pre_take_buttons").style.display = "";
+    document.getElementById("post_take_buttons").style.display = "none";
+
+    callhandlelogEvent("7_TrangXacThucKhuonMat_ClickButton_Xong", "7_TrangXacThucKhuonMat_ClickButton_Xong", "7_TrangXacThucKhuonMat_ClickButton_Xong");
+    LoadingAnimation.display();
+  });
+}
+
 const cameras = {
   GREEN: "#32EEDB",
   RED: "#FF2C35",
@@ -173,29 +205,36 @@ const cameras = {
   },
   handleEvent: function () {
     try {
-      this._videoLive.addEventListener("loadeddata", async () => {
-        if (this.faceRunsInterval) clearInterval(this.faceRunsInterval);
-        console.log(cameras.device);
-        cameras.faceRunsInterval = setInterval(this.detectFaces, 100);
-      });
+      if (this.device === "ANDROID") {
+        Webcam.freeze();
 
-      if (cameras.isMediaRecorderSupported) {
-        cameras.mediaRecorder.addEventListener("dataavailable", (e) => {
-          if (this.faceVerify == true) {
-            this._videoRecorded.src = URL.createObjectURL(e.data);
-
-            const chunks = [];
-            chunks.push(e.data);
-            const fileName = cameras.generateUUID();
-
-            const file = cameras.device === "IOS" ? new File(chunks, `${fileName}.mp4`, { type: "video/mp4" }) : new File(chunks, `${fileName}.webm`, { type: "video/webm" });
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-            cameras._faceRecord.files = dataTransfer.files;
-          }
+        // swap button sets
+        document.getElementById("pre_take_buttons").style.display = "none";
+        document.getElementById("post_take_buttons").style.display = "";
+      } else {
+        this._videoLive.addEventListener("loadeddata", async () => {
+          if (this.faceRunsInterval) clearInterval(this.faceRunsInterval);
+          console.log(cameras.device);
+          cameras.faceRunsInterval = setInterval(this.detectFaces, 100);
         });
-      }
 
+        if (cameras.isMediaRecorderSupported) {
+          cameras.mediaRecorder.addEventListener("dataavailable", (e) => {
+            if (this.faceVerify == true) {
+              this._videoRecorded.src = URL.createObjectURL(e.data);
+
+              const chunks = [];
+              chunks.push(e.data);
+              const fileName = cameras.generateUUID();
+
+              const file = cameras.device === "IOS" ? new File(chunks, `${fileName}.mp4`, { type: "video/mp4" }) : new File(chunks, `${fileName}.webm`, { type: "video/webm" });
+              const dataTransfer = new DataTransfer();
+              dataTransfer.items.add(file);
+              cameras._faceRecord.files = dataTransfer.files;
+            }
+          });
+        }
+      }
       this._retake.addEventListener("click", function () {
         if (cameras.faceVerify && cameras.stream.active == false) {
           cameras.startStream();
@@ -208,31 +247,36 @@ const cameras = {
   },
   startStream: async function () {
     try {
-      cameras.stream = await navigator.mediaDevices.getUserMedia({
-        audio: false,
-        video: { facingMode: "user" },
-      });
+      if (cameras.device === "IOS") {
+        cameras.stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: { facingMode: "user" },
+        });
 
-      this._videoLive.srcObject = cameras.stream;
+        this._videoLive.srcObject = cameras.stream;
 
-      let options;
-      if (MediaRecorder.isTypeSupported("video/mp4")) {
-        options = { mimeType: "video/mp4" };
-      } else if (MediaRecorder.isTypeSupported("video/webm")) {
-        options = { mimeType: "video/webm" };
-      } else if (MediaRecorder.isTypeSupported("video/webm; codecs=vp8")) {
-        options = { mimeType: "video/webm; codecs=vp8" };
-      } else if (MediaRecorder.isTypeSupported("video/webm; codecs=vp9")) {
-        options = { mimeType: "video/webm; codecs=vp9" };
+        let options;
+        if (MediaRecorder.isTypeSupported("video/mp4")) {
+          options = { mimeType: "video/mp4" };
+        } else if (MediaRecorder.isTypeSupported("video/webm")) {
+          options = { mimeType: "video/webm" };
+        } else if (MediaRecorder.isTypeSupported("video/webm; codecs=vp8")) {
+          options = { mimeType: "video/webm; codecs=vp8" };
+        } else if (MediaRecorder.isTypeSupported("video/webm; codecs=vp9")) {
+          options = { mimeType: "video/webm; codecs=vp9" };
+        } else {
+          console.error("no suitable mimetype found for this device");
+          this._message.textContent = "MediaRecorder is not supported";
+        }
+
+        if (options) {
+          this.isMediaRecorderSupported = true;
+          this._message.textContent = "Đưa camera lại gần đến khi nhận diện được khuôn mặt";
+          this.mediaRecorder = new MediaRecorder(cameras.stream, options);
+        }
       } else {
-        console.error("no suitable mimetype found for this device");
-        this._message.textContent = "MediaRecorder is not supported";
-      }
-
-      if (options) {
-        this.isMediaRecorderSupported = true;
-        this._message.textContent = "Đưa camera lại gần đến khi nhận diện được khuôn mặt";
-        this.mediaRecorder = new MediaRecorder(cameras.stream, options);
+        Webcam.set({ image_format: "jpeg", jpeg_quality: 90 });
+        Webcam.attach("#my_camera");
       }
     } catch (error) {
       console.log("init camera stream failure: ", error);
