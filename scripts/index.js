@@ -287,6 +287,13 @@ const cameras = {
           return { x: pos.x + cameras.standardDeviation.x, y: pos - cameras.standardDeviation.y };
       }
     },
+    drawCircle: function (ctx, percentage) {
+      // ctx.beginPath();
+      // ctx.arc(cameras._canvas.width / 2, cameras._canvas.height / 2, cameras._canvas.height / 2 + 1, percentage * Math.PI, 1.5 * Math.PI);
+      // ctx.strokeStyle = cameras.RED;
+      // ctx.lineWidth = 8;
+      // ctx.stroke();
+    },
     roundRect: function (ctx, x, y, width, height, radius = 8, fill = false, stroke = true) {
       if (typeof radius === "number") {
         radius = { tl: radius, tr: radius, br: radius, bl: radius };
@@ -313,6 +320,7 @@ const cameras = {
     },
     drawResult: function (frame, ctx, prediction, boundingBox, showKeypoints, showFaceLine) {
       ctx.clearRect(0, 0, cameras._canvas.width, cameras._canvas.height);
+      // cameras.canvasHelper.drawCircle(ctx, cameras.timer.getTime());
 
       prediction.map((pred) => {
         if (boundingBox) {
@@ -366,6 +374,7 @@ const cameras = {
 
     cameras.progressInterval = setInterval(() => {
       progressValue++;
+      cameras.canvasHelper.drawCircle(cameras.ctx, progressValue / 100);
       cameras._timer.textContent = `${progressValue}%`;
       cameras._progressBar.style.background = `conic-gradient(#4d5bf9 ${progressValue * 3.6}deg,#cadcff ${progressValue * 3.6}deg)`;
       if (progressValue == progressEndValue) {
@@ -460,6 +469,7 @@ const cameras = {
   },
   handleTimer: function (time) {
     // cameras._timer.textContent = "recording: " + time + " s";
+    // cameras.canvasHelper.drawCircle(cameras.ctx, ((5 - time) / 5) * 100);
     if (time == 0) {
       cameras.stop();
       cameras._message.textContent = "Quay khuôn mặt thànhh công";

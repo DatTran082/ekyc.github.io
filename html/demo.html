@@ -8,15 +8,17 @@
     <title>Document</title>
   </head>
   <body>
-    <div id="my_camera"></div>
+    <div id="my_camera" style="width: 320px; height: 240px; max-width: 368px; border: 1px solid black;"></div>
 
     <div id="pre_take_buttons" class="button-container" style="margin-top:15px;">
       <input type=button value="Xem trước ảnh" onClick="preview_snapshot()" class="button">
     </div>
+
     <div id="post_take_buttons" style="display: none; margin-top: 15px;" class="button-container">
       <input type=button value="&lt; Chụp lại" onClick="cancel_preview()" class="button">
       <input type=button value="Lưu ảnh &gt;" onClick="save_photo()" style="font-weight:bold;" class="button">
     </div>
+
     <input id="mydata" type="hidden" name="mydata" value />
 
     <!-- Script -->
@@ -30,9 +32,12 @@
 
 
         });
-        Webcam.attach('#my_camera');
 
-
+      const log = Webcam.attach('#my_camera');
+      
+      
+      console.log(Webcam);
+ 
       function preview_snapshot() {
           // freeze camera so user can preview pic
           Webcam.freeze();
