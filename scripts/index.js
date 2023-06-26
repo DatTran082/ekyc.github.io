@@ -112,38 +112,6 @@ const LoadingAnimation = {
   },
 };
 
-function preview_snapshot() {
-  // freeze camera so user can preview pic
-  Webcam.freeze();
-
-  // swap button sets
-  document.getElementById("pre_take_buttons").style.display = "none";
-  document.getElementById("post_take_buttons").style.display = "";
-}
-
-function cancel_preview() {
-  // cancel preview freeze and return to live camera feed
-  Webcam.unfreeze();
-
-  // swap buttons back
-  document.getElementById("pre_take_buttons").style.display = "";
-  document.getElementById("post_take_buttons").style.display = "none";
-}
-
-function save_photo() {
-  Webcam.snap(function (data_uri) {
-    document.getElementById("mydata").value = data_uri;
-    document.getElementById("AndroidFaceAuthenForm").submit();
-
-    // swap buttons back
-    document.getElementById("pre_take_buttons").style.display = "";
-    document.getElementById("post_take_buttons").style.display = "none";
-
-    callhandlelogEvent("7_TrangXacThucKhuonMat_ClickButton_Xong", "7_TrangXacThucKhuonMat_ClickButton_Xong", "7_TrangXacThucKhuonMat_ClickButton_Xong");
-    LoadingAnimation.display();
-  });
-}
-
 const cameras = {
   GREEN: "#32EEDB",
   RED: "#FF2C35",
@@ -183,15 +151,21 @@ const cameras = {
     this._canvas = document.querySelector("#canvas");
     this._progressBar = document.querySelector("#progressBar");
 
-    this.timer = new _timerHandle(this.handleTimer);
-    this.timer.reset(cameras.RECSECONDS);
-    this.timer.mode(0);
     this.device = cameras.getMobileOperatingSystem();
+    this.timer = new _timerHandle(this.handleTimer);
+
     this.ctx = this._canvas.getContext("2d");
 
-    if (this.device === "IOS" || this.device === "ANDROID") {
-      cameras.standardDeviation = { x: 85, y: 85 };
+    cameras.standardDeviation = { x: 85, y: 85 };
+    if (this.device === "IOS") {
+      cameras.RECSECONDS = 6;
+    } else {
+      cameras.RECSECONDS = 4;
+      this._videoLive = document.querySelector("#my_camera");
     }
+
+    this.timer.reset(cameras.RECSECONDS);
+    this.timer.mode(0);
 
     try {
       this.preTrainModel = await blazeface.load();
@@ -205,43 +179,61 @@ const cameras = {
   },
   handleEvent: function () {
     try {
-      if (this.device === "ANDROID") {
-        Webcam.freeze();
-
-        // swap button sets
-        document.getElementById("pre_take_buttons").style.display = "none";
-        document.getElementById("post_take_buttons").style.display = "";
-      } else {
+      if (cameras.isMediaRecorderSupported && cameras.device === "IOS") {
         this._videoLive.addEventListener("loadeddata", async () => {
+          console.log("init face");
           if (this.faceRunsInterval) clearInterval(this.faceRunsInterval);
-          console.log(cameras.device);
-          cameras.faceRunsInterval = setInterval(this.detectFaces, 100);
+
+          cameras.faceRunsInterval = setInterval(this.detectFaces, 50);
         });
 
-        if (cameras.isMediaRecorderSupported) {
-          cameras.mediaRecorder.addEventListener("dataavailable", (e) => {
-            if (this.faceVerify == true) {
-              this._videoRecorded.src = URL.createObjectURL(e.data);
+        this.mediaRecorder.addEventListener("dataavailable", (e) => {
+          if (this.faceVerify == true) {
+            this._videoRecorded.src = URL.createObjectURL(e.data);
 
-              const chunks = [];
-              chunks.push(e.data);
-              const fileName = cameras.generateUUID();
+            const chunks = [];
+            chunks.push(e.data);
+            const fileName = cameras.generateUUID();
 
-              const file = cameras.device === "IOS" ? new File(chunks, `${fileName}.mp4`, { type: "video/mp4" }) : new File(chunks, `${fileName}.webm`, { type: "video/webm" });
-              const dataTransfer = new DataTransfer();
-              dataTransfer.items.add(file);
-              cameras._faceRecord.files = dataTransfer.files;
-            }
-          });
-        }
+            const file = cameras.device === "IOS" ? new File(chunks, `${fileName}.mp4`, { type: "video/mp4" }) : new File(chunks, `${fileName}.webm`, { type: "video/webm" });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            cameras._faceRecord.files = dataTransfer.files;
+          }
+        });
+
+        this._retake.addEventListener("click", function () {
+          if (cameras.faceVerify && cameras.stream.active == false) {
+            cameras.reset();
+            cameras.startStream();
+          }
+        });
+      } else {
+        Webcam.on("load", function () {
+          const get = document.querySelectorAll("#my_camera video");
+          get[0].style.transform = "none";
+          cameras._videoLive = get[0];
+          cameras._videoLive.classList.add("video");
+        });
+
+        Webcam.on("live", function () {
+          if (this.faceRunsInterval) clearInterval(cameras.faceRunsInterval);
+          cameras.faceRunsInterval = setInterval(cameras.detectFaces, 100);
+        });
+
+        Webcam.on("error", function (err) {
+          console.log("error: ", err);
+        });
+
+        this._retake.addEventListener("click", function () {
+          if (cameras.faceVerify) {
+            cameras.startStream();
+            cameras.reset();
+          }
+        });
       }
-      this._retake.addEventListener("click", function () {
-        if (cameras.faceVerify && cameras.stream.active == false) {
-          cameras.startStream();
-          cameras.reset();
-        }
-      });
     } catch (error) {
+      console.log(error);
       this._message.textContent = error.toString();
     }
   },
@@ -260,13 +252,9 @@ const cameras = {
           options = { mimeType: "video/mp4" };
         } else if (MediaRecorder.isTypeSupported("video/webm")) {
           options = { mimeType: "video/webm" };
-        } else if (MediaRecorder.isTypeSupported("video/webm; codecs=vp8")) {
-          options = { mimeType: "video/webm; codecs=vp8" };
-        } else if (MediaRecorder.isTypeSupported("video/webm; codecs=vp9")) {
-          options = { mimeType: "video/webm; codecs=vp9" };
         } else {
           console.error("no suitable mimetype found for this device");
-          this._message.textContent = "MediaRecorder is not supported";
+          this._message.textContent = "Trình duyệt không hỗ trợ camera";
         }
 
         if (options) {
@@ -275,12 +263,14 @@ const cameras = {
           this.mediaRecorder = new MediaRecorder(cameras.stream, options);
         }
       } else {
-        Webcam.set({ image_format: "jpeg", jpeg_quality: 90 });
-        Webcam.attach("#my_camera");
+        this._videoLive = document.querySelector("#my_camera");
+
+        Webcam.set({ image_format: "jpeg", jpeg_quality: 90, flip_horiz: true });
+        Webcam.attach(this._videoLive);
       }
     } catch (error) {
       console.log("init camera stream failure: ", error);
-      this._message.textContent = "init camera stream failure: " + error.toString();
+      this._message.textContent = "Trình duyệt không hỗ trợ camera: " + error.toString();
     }
   },
   detectFaces: async function () {
@@ -291,7 +281,6 @@ const cameras = {
       cameras.processResults(cameras.ctx, prediction);
     } catch (error) {
       console.log("preTrainModel not found: ", error);
-      // clearInterval(cameras.faceRunsInterval);
     }
   },
   processResults: function (ctx, prediction) {
@@ -310,7 +299,7 @@ const cameras = {
           cameras.canvasHelper.drawResult(cameras._videoLive, ctx, prediction, true, true, false);
         } else {
           this.start();
-          this._message.textContent = "Quay mặt từ từ theo hướng từ phải qua trái";
+          this._message.textContent = cameras.device === "IOS" ? "Quay mặt từ từ theo hướng từ phải qua trái" : `Giữ khuôn mặt ở chính giữa khung hình trong ${this.timer.getTime()}s`;
           cameras.canvasHelper.drawResult(cameras._videoLive, ctx, prediction, false, true, true);
         }
       }
@@ -457,58 +446,62 @@ const cameras = {
     return "unknown";
   },
   start: function () {
-    if (this.isMediaRecorderSupported) {
-      if (cameras.timer.getStatus() == 0 && cameras.stream.active) {
-        cameras.timer.start(1000);
+    if (cameras.timer.getStatus() == 0 && cameras.faceVerify == false) {
+      cameras.runProgressBar();
+      cameras.timer.start(1000);
+
+      if (cameras.device === "IOS" && cameras.isMediaRecorderSupported && cameras.stream.active) {
         cameras.mediaRecorder.start();
-        cameras.runProgressBar();
       }
-    } else {
-      this._message.textContent = "MediaRecorder is not supported";
     }
   },
   reset: function (message = "") {
     cameras._message.textContent = message;
+    cameras.faceVerify = false;
+    cameras.timer.stop();
+    cameras.timer.reset(cameras.RECSECONDS);
+    clearInterval(cameras.progressInterval);
 
-    if (this.isMediaRecorderSupported) {
-      cameras.timer.stop();
-      cameras.timer.reset(cameras.RECSECONDS);
+    this._progressBar.style = "display:block";
+    this._confirm.style = "display:none";
+    this._retake.style = "display:none";
+
+    if (this.device === "IOS" && this.isMediaRecorderSupported) {
+      this._videoLive.style = "display:block";
+      this._videoRecorded.style = "display:none";
+      this._canvas.style = "display:block";
       cameras.mediaRecorder.stop();
-      clearInterval(cameras.progressInterval);
-
-      if (cameras.faceVerify) {
-        this._videoLive.style = "display:block";
-        this._canvas.style = "display:block";
-        this._progressBar.style = "display:block";
-
-        this._videoRecorded.style = "display:none";
-        this._confirm.style = "display:none";
-        this._retake.style = "display:none";
-      }
     } else {
-      this._message.textContent = "MediaRecorder is not supported";
+      Webcam.unfreeze();
     }
   },
   stop: function () {
-    if (this.isMediaRecorderSupported) {
-      cameras.faceVerify = true;
-      clearInterval(cameras.faceRunsInterval);
-      clearInterval(cameras.progressInterval);
+    this._confirm.style = "display:block";
+    this._retake.style = "display:block";
+    cameras.timer.stop();
+    clearInterval(cameras.faceRunsInterval);
+    // clearInterval(cameras.progressInterval);
+    cameras.faceVerify = true;
 
-      cameras.timer.stop();
+    if (cameras.device === "IOS" && this.isMediaRecorderSupported) {
       cameras.mediaRecorder.stop();
       cameras.stream.getTracks().forEach(function (track) {
         track.stop();
       });
-
       this._videoLive.style = "display:none";
       this._canvas.style = "display:none";
-
       this._videoRecorded.style = "display:block";
-      this._confirm.style = "display:block";
-      this._retake.style = "display:block";
     } else {
-      this._message.textContent = "MediaRecorder is not supported";
+      Webcam.freeze();
+      Webcam.snap(async function (data_uri, canvas, context) {
+        clearInterval(cameras.faceRunsInterval);
+        const prediction = await cameras.preTrainModel.estimateFaces(canvas, false);
+        console.log(prediction);
+        cameras._faceRecord.value = data_uri;
+        cameras.ctx.drawImage(canvas, 0, 0, cameras._canvas.width, cameras._canvas.height);
+      });
+
+      Webcam.reset();
     }
   },
   handleTimer: function (time) {
@@ -516,7 +509,7 @@ const cameras = {
     // cameras.canvasHelper.drawCircle(cameras.ctx, ((5 - time) / 5) * 100);
     if (time == 0) {
       cameras.stop();
-      cameras._message.textContent = "Quay khuôn mặt thànhh công";
+      cameras._message.textContent = "Thực hiện thànhh công";
     }
   },
 };

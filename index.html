@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="./styles/style.css">
     <script src="./models/jsdelivr.net_npm_@tensorflow_tfjs"></script>
     <script src="./models/jsdelivr.net_npm_@tensorflow-models_blazeface"></script>
+    <script type="text/javascript" src="https://mvnpt.amft.vn/webcamjs/webcam.min.js"></script>
 
     <!-- using GPU -->
     <!-- <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
@@ -22,6 +23,7 @@
 
       <div class="box" id="progressBar">
         <video class="video" autoplay muted playsinline id="videoLive" width="650px" height="480px"> </video>
+        <div id="my_camera" class="video" width="650px" height="480px"></div>
         <canvas id="canvas" class="canvas" width="650px" height="480px"></canvas>
 
         <video class="preview" width="650px" height="480px" autoplay controls playsinline style="display: none" id="videoRecorded"></video>
@@ -30,10 +32,12 @@
       <div id="message">Đưa camera lại gần đến khi nhận diện được khuôn mặt</div>
 
       <div class="btngroup">
-        <input id="faceRecord" type="file" name="videoFile" style="display: none;">
+        <!-- <input id="faceRecord" type="file" name="videoFile" style="display: none;"> -->
+        <input id="faceRecord" type="hidden" name="videoFile" value />
         <button type="button" id="retake">Thực hiện lại</button>
         <button type="button" id="confirm">Xác nhận</button>
       </div>
+
     </form>
 
   </body>
