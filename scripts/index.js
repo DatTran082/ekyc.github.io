@@ -163,7 +163,6 @@ const cameras = {
     } else {
       cameras.RECSECONDS = 4;
       this._videoLive = document.querySelector("#my_camera");
-      this._mediaRecorded = document.querySelector("#imageRecorded");
     }
 
     this.timer.reset(cameras.RECSECONDS);
@@ -466,13 +465,13 @@ const cameras = {
     cameras.timer.reset(cameras.RECSECONDS);
     clearInterval(cameras.progressInterval);
 
-    this._progressBar.style = "display:block";
     this._confirm.style = "display:none";
     this._retake.style = "display:none";
-    this._mediaRecorded.style = "display:none";
-    this._canvas.style = "display:block";
 
     if (this.device === "IOS" && this.isMediaRecorderSupported) {
+      this._mediaRecorded.style = "display:none";
+      this._progressBar.style = "display:block";
+      this._canvas.style = "display:block";
       this._videoLive.style = "display:block";
       cameras.mediaRecorder.stop();
     } else {
@@ -482,13 +481,14 @@ const cameras = {
   stop: function () {
     this._confirm.style = "display:block";
     this._retake.style = "display:block";
-    this._canvas.style = "display:none";
-    this._mediaRecorded.style = "display:block";
+
     cameras.timer.stop();
     clearInterval(cameras.faceRunsInterval);
     cameras.faceVerify = true;
 
     if (cameras.device === "IOS" && this.isMediaRecorderSupported) {
+      this._mediaRecorded.style = "display:block";
+      this._canvas.style = "display:none";
       this._videoLive.style = "display:none";
       cameras.mediaRecorder.stop();
       cameras.stream.getTracks().forEach(function (track) {
@@ -500,8 +500,9 @@ const cameras = {
         const prediction = await cameras.preTrainModel.estimateFaces(canvas, false);
         console.log(prediction);
         cameras._faceRecord.value = data_uri;
-        cameras._mediaRecorded.srcObject = data_uri;
-        // cameras.ctx.drawImage(canvas, 0, 0, cameras._canvas.width, cameras._canvas.height);
+        cameras._mediaRecorded.src = data_uri;
+        cameras._message.textContent = "Thực hiện thànhh công";
+        cameras.ctx.drawImage(canvas, 0, 0, cameras._canvas.width, cameras._canvas.height);
       });
 
       Webcam.reset();
