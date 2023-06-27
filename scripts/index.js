@@ -123,7 +123,7 @@ const cameras = {
   _retake: null,
   _faceAuthenForm: null,
   _videoLive: null,
-  _videoRecorded: null,
+  _mediaRecorded: null,
   _message: null,
   _timer: null,
   _canvas: null,
@@ -146,7 +146,7 @@ const cameras = {
     this._videoLive = document.querySelector("#videoLive");
     this._confirm = document.querySelector("#confirm");
     this._retake = document.querySelector("#retake");
-    this._videoRecorded = document.querySelector("#videoRecorded");
+    this._mediaRecorded = document.querySelector("#videoRecorded");
     this._timer = document.querySelector("#timer");
     this._message = document.querySelector("#message");
     this._canvas = document.querySelector("#canvas");
@@ -163,6 +163,7 @@ const cameras = {
     } else {
       cameras.RECSECONDS = 4;
       this._videoLive = document.querySelector("#my_camera");
+      this._mediaRecorded = document.querySelector("#imageRecorded");
     }
 
     this.timer.reset(cameras.RECSECONDS);
@@ -190,7 +191,7 @@ const cameras = {
 
         this.mediaRecorder.addEventListener("dataavailable", (e) => {
           if (this.faceVerify == true) {
-            this._videoRecorded.src = URL.createObjectURL(e.data);
+            this._mediaRecorded.src = URL.createObjectURL(e.data);
 
             const chunks = [];
             chunks.push(e.data);
@@ -468,11 +469,11 @@ const cameras = {
     this._progressBar.style = "display:block";
     this._confirm.style = "display:none";
     this._retake.style = "display:none";
+    this._mediaRecorded.style = "display:none";
+    this._canvas.style = "display:block";
 
     if (this.device === "IOS" && this.isMediaRecorderSupported) {
       this._videoLive.style = "display:block";
-      this._videoRecorded.style = "display:none";
-      this._canvas.style = "display:block";
       cameras.mediaRecorder.stop();
     } else {
       Webcam.unfreeze();
@@ -481,34 +482,26 @@ const cameras = {
   stop: function () {
     this._confirm.style = "display:block";
     this._retake.style = "display:block";
+    this._canvas.style = "display:none";
+    this._mediaRecorded.style = "display:block";
     cameras.timer.stop();
     clearInterval(cameras.faceRunsInterval);
-    // clearInterval(cameras.progressInterval);
     cameras.faceVerify = true;
 
     if (cameras.device === "IOS" && this.isMediaRecorderSupported) {
+      this._videoLive.style = "display:none";
       cameras.mediaRecorder.stop();
       cameras.stream.getTracks().forEach(function (track) {
         track.stop();
       });
-      this._videoLive.style = "display:none";
-      this._canvas.style = "display:none";
-      this._videoRecorded.style = "display:block";
     } else {
       Webcam.freeze();
       Webcam.snap(async function (data_uri, frame, context) {
-        clearInterval(cameras.faceRunsInterval);
         const prediction = await cameras.preTrainModel.estimateFaces(canvas, false);
         console.log(prediction);
         cameras._faceRecord.value = data_uri;
+        cameras._mediaRecorded.srcObject = data_uri;
         // cameras.ctx.drawImage(canvas, 0, 0, cameras._canvas.width, cameras._canvas.height);
-
-        const ratio = Math.min(cameras._canvas.width / frame.width, cameras._canvas.height / frame.height);
-        const centerShift_x = (cameras._canvas.width - frame.width * ratio) / 2;
-        const centerShift_y = (cameras._canvas.height - frame.height * ratio) / 2;
-
-        ctx.clearRect(0, 0, cameras._canvas.width, cameras._canvas.height);
-        ctx.drawImage(frame, 0, 0, frame.width, frame.height, centerShift_x, centerShift_y, frame.width * ratio, frame.height * ratio);
       });
 
       Webcam.reset();
