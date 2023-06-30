@@ -163,6 +163,7 @@ const cameras = {
     } else {
       cameras.RECSECONDS = 4;
       this._videoLive = document.querySelector("#my_camera");
+      // this._faceRecord = document.querySelector("#imgfaceRecord");
     }
 
     this.timer.reset(cameras.RECSECONDS);
@@ -497,12 +498,25 @@ const cameras = {
     } else {
       Webcam.freeze();
       Webcam.snap(async function (data_uri, frame, context) {
-        const prediction = await cameras.preTrainModel.estimateFaces(canvas, false);
+        const prediction = await cameras.preTrainModel.estimateFaces(frame, false);
         console.log(prediction);
-        cameras._faceRecord.value = data_uri;
-        cameras._mediaRecorded.src = data_uri;
+        // cameras._faceRecord.value = data_uri;
+
+        const response = await fetch(data_uri);
+        const blob = await response.blob();
+        const fileName = cameras.generateUUID();
+
+        const file = new File([blob], `${fileName}.jpg`, {
+          type: "image/jpeg",
+          lastModified: new Date(),
+        });
+
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        cameras._faceRecord.files = dataTransfer.files;
+
         cameras._message.textContent = "Thực hiện thànhh công";
-        cameras.ctx.drawImage(canvas, 0, 0, cameras._canvas.width, cameras._canvas.height);
+        cameras.ctx.drawImage(frame, 0, 0, cameras._canvas.width, cameras._canvas.height);
       });
 
       Webcam.reset();
