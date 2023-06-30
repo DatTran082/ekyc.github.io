@@ -497,12 +497,11 @@ const cameras = {
     } else {
       Webcam.freeze();
       Webcam.snap(async function (data_uri, frame, context) {
-        const prediction = await cameras.preTrainModel.estimateFaces(canvas, false);
+        const prediction = await cameras.preTrainModel.estimateFaces(frame, false);
         console.log(prediction);
         cameras._faceRecord.value = data_uri;
-        cameras._mediaRecorded.src = data_uri;
         cameras._message.textContent = "Thực hiện thànhh công";
-        cameras.ctx.drawImage(canvas, 0, 0, cameras._canvas.width, cameras._canvas.height);
+        cameras.ctx.drawImage(frame, 0, 0, cameras._canvas.width, cameras._canvas.height);
       });
 
       Webcam.reset();
