@@ -113,9 +113,6 @@ const LoadingAnimation = {
 };
 
 const cameras = {
-  GREEN: "#32EEDB",
-  RED: "#FF2C35",
-  BLUE: "#157AB3",
   themes: {
     main: "#3079FF",
     primary: "#EAF1FF",
@@ -170,12 +167,11 @@ const cameras = {
     }
 
     if (cameras.device === "IOS") {
-      // cameras.standardDeviation = { x: 85, y: 85 };
+      cameras.standardDeviation = { x: 85, y: 85 };
       cameras.RECSECONDS = 6;
       await cameras.startIOSStream();
       cameras.handleIOSEvent();
     } else {
-      // this._videoLive = document.querySelector("#my_camera");
       cameras.standardDeviation = { x: 175, y: -40 };
       cameras.RECSECONDS = 4;
 
@@ -294,8 +290,6 @@ const cameras = {
       });
 
       Webcam.on("live", function () {
-        // if (this.faceRunsInterval) clearInterval(cameras.faceRunsInterval);
-        // cameras.faceRunsInterval = setInterval(cameras.detectFaces,frame 50);
         cameras._snap.style = "display:block";
         cameras._retake.style = "display:none";
         cameras._confirm.style = "display:none";
@@ -463,7 +457,7 @@ const cameras = {
         }
 
         if (showKeypoints) {
-          ctx.fillStyle = cameras.RED;
+          ctx.fillStyle = "#FF2C35";
           pred.landmarks.map((landmark) => {
             ctx.fillRect(this.translation(landmark[0], "OX"), this.translation(landmark[1], "OY"), 4, 4);
           });
@@ -579,31 +573,6 @@ const cameras = {
       cameras.stream.getTracks().forEach(function (track) {
         track.stop();
       });
-    } else {
-      Webcam.freeze();
-      Webcam.snap(async function (data_uri, frame, context) {
-        const prediction = await cameras.preTrainModel.estimateFaces(frame, false);
-        console.log(prediction);
-        // cameras._faceRecord.value = data_uri;
-
-        const response = await fetch(data_uri);
-        const blob = await response.blob();
-        const fileName = cameras.generateUUID();
-
-        const file = new File([blob], `${fileName}.jpg`, {
-          type: "image/jpeg",
-          lastModified: new Date(),
-        });
-
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(file);
-        cameras._faceRecord.files = dataTransfer.files;
-
-        cameras._message.textContent = "Thực hiện thànhh công";
-        cameras.ctx.drawImage(frame, 0, 0, cameras._canvas.width, cameras._canvas.height);
-      });
-
-      Webcam.reset();
     }
   },
   handleTimer: function (time) {
