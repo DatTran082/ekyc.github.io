@@ -73,7 +73,8 @@ function _timerHandle(callback) {
 
 const LoadingAnimation = {
   renderStyle: function () {
-    document.querySelector("body").innerHTML += `
+    appendChild(node);
+    document.querySelector("body").append(`
           <style>
               .container-loader {position: fixed;width: 100%;top: 0;bottom: 0;display: none;background-color: rgb(0 0 0 / 0.4);justify-content: center;align-items: center;z-index:99999;}
               .loading i {width: 20px;height: 20px; display: inline-block;border-radius: 50%; background: #D92727;}
@@ -86,10 +87,10 @@ const LoadingAnimation = {
               @keyframes loading-ani3 {100% {transform: translate(20px);}}
               @media only screen and (min-width: 500px) {.container-loader {width: 500px;} .profile-layout .modal-screen { max-width: 500px;} }
           </style>
-      `;
+      `);
   },
   renderElement: function () {
-    document.querySelector("body").innerHTML += `
+    document.querySelector("body").append(`
           <div class="container-loader">
               <div class="loading"><i></i><i></i><i></i><i></i></div>
                 <div class="ani1"><i></i><i></i><i></i></div>
@@ -97,7 +98,7 @@ const LoadingAnimation = {
                 <div class="ani3"><i></i><i></i><i></i></div>
                 <div class="ani4"><i></i><i></i><i></i></div>
           </div>
-      `;
+      `);
   },
   display: function () {
     document.querySelector(".container-loader").style.display = "flex";
@@ -116,10 +117,6 @@ const cameras = {
   GREEN: "#32EEDB",
   RED: "#FF2C35",
   BLUE: "#157AB3",
-  themes: {
-    main: "#3079FF",
-    primary: "#EAF1FF",
-  },
   _progressBar: null,
   _faceRecord: null,
   _confirm: null,
@@ -131,7 +128,6 @@ const cameras = {
   _timer: null,
   _canvas: null,
   _loader: null,
-  _snap: null,
   timer: null,
   RECSECONDS: 6,
   faceVerify: false,
@@ -154,199 +150,130 @@ const cameras = {
     this._mediaRecorded = document.querySelector("#videoRecorded");
     this._timer = document.querySelector("#timer");
     this._message = document.querySelector("#message");
-    this._snap = document.querySelector("#snap");
     this._canvas = document.querySelector("#canvas");
     this._progressBar = document.querySelector("#progressBar");
 
     this.device = cameras.getMobileOperatingSystem();
-    this.ctx = this._canvas.getContext("2d");
     this.timer = new _timerHandle(this.handleTimer);
 
-    LoadingAnimation.display();
+    this.ctx = this._canvas.getContext("2d");
+
+    cameras.standardDeviation = { x: 85, y: 85 };
+    if (this.device === "IOS") {
+      cameras.RECSECONDS = 6;
+    } else {
+      cameras.RECSECONDS = 4;
+      this._videoLive = document.querySelector("#my_camera");
+      // this._faceRecord = document.querySelector("#imgfaceRecord");
+    }
+
+    this.timer.reset(cameras.RECSECONDS);
+    this.timer.mode(0);
+
     try {
       this.preTrainModel = await blazeface.load();
     } catch (error) {
       console.log("init faceDetection failure: ", error);
     }
 
-    if (cameras.device === "IOS") {
-      // cameras.standardDeviation = { x: 85, y: 85 };
-      cameras.RECSECONDS = 6;
-      await cameras.startIOSStream();
-      cameras.handleIOSEvent();
-    } else {
-      // this._videoLive = document.querySelector("#my_camera");
-      cameras.standardDeviation = { x: 175, y: -40 };
-      cameras.RECSECONDS = 4;
+    await cameras.startStream();
 
-      await cameras.startAndroidStream();
-      cameras.handleAndroidEvent();
-    }
-
-    this.timer.reset(cameras.RECSECONDS);
-    this.timer.mode(0);
-
-    LoadingAnimation.dispose();
+    cameras.handleEvent();
   },
-  startIOSStream: async function () {
+  handleEvent: function () {
     try {
-      cameras.stream = await navigator.mediaDevices.getUserMedia({
-        audio: false,
-        video: { facingMode: "user" },
-      });
+      if (cameras.isMediaRecorderSupported && cameras.device === "IOS") {
+        this._videoLive.addEventListener("loadeddata", async () => {
+          console.log("init face");
+          // if (this.faceRunsInterval) clearInterval(this.faceRunsInterval);
 
-      this._videoLive.srcObject = cameras.stream;
-
-      let options;
-      if (MediaRecorder.isTypeSupported("video/mp4")) {
-        options = { mimeType: "video/mp4" };
-      } else if (MediaRecorder.isTypeSupported("video/webm")) {
-        options = { mimeType: "video/webm" };
-      } else {
-        console.error("no suitable mimetype found for this device");
-        this._message.textContent = "Trình duyệt không hỗ trợ camera";
-      }
-
-      if (options) {
-        this.isMediaRecorderSupported = true;
-        this._message.textContent = "Đưa camera lại gần và giữ yên đến khi nhận diện được khuôn mặt";
-        this.mediaRecorder = new MediaRecorder(cameras.stream, options);
-      }
-    } catch (error) {
-      console.log("init camera stream failure: ", error);
-      this._message.textContent = "Trình duyệt không hỗ trợ camera: " + error.toString();
-    }
-  },
-  handleIOSEvent: function () {
-    LoadingAnimation.display();
-    try {
-      this._videoLive.addEventListener("loadeddata", async () => {
-        if (this.faceRunsInterval) clearInterval(this.faceRunsInterval);
-
-        cameras.faceRunsInterval = setInterval(this.detectFaces, 50);
-      });
-
-      this.mediaRecorder.addEventListener("dataavailable", (e) => {
-        if (this.faceVerify == true) {
-          this._mediaRecorded.src = URL.createObjectURL(e.data);
-
-          const chunks = [];
-          chunks.push(e.data);
-          const fileName = cameras.generateUUID();
-
-          const file = new File(chunks, `${fileName}.mp4`, { type: "video/mp4" });
-          const dataTransfer = new DataTransfer();
-          dataTransfer.items.add(file);
-          cameras._faceRecord.files = dataTransfer.files;
-        }
-      });
-
-      this._retake.addEventListener("click", function () {
-        if (cameras.faceVerify && cameras.stream.active == false) {
-          LoadingAnimation.display();
-          cameras.reset();
-          cameras.startIOSStream();
-          LoadingAnimation.dispose();
-        }
-      });
-    } catch (error) {
-      console.log(error);
-      this._message.textContent = error.toString();
-    } finally {
-      LoadingAnimation.dispose();
-    }
-  },
-  startAndroidStream: async function () {
-    try {
-      // this._videoLive = document.querySelector("#my_camera");
-      const livecamera = document.querySelector("#my_camera");
-      this._message.textContent = "Chụp ảnh chính diện khuôn mặt";
-
-      Webcam.set({
-        width: this._progressBar.width,
-        height: this._progressBar.height,
-        image_format: "jpeg",
-        jpeg_quality: 90,
-        force_flash: false,
-        flip_horiz: true,
-        fps: 45,
-      });
-
-      Webcam.attach(livecamera);
-    } catch (error) {
-      console.log("init camera stream failure: ", error);
-      this._message.textContent = "Trình duyệt không hỗ trợ camera: " + error.toString();
-    }
-  },
-  handleAndroidEvent: function () {
-    LoadingAnimation.display();
-    try {
-      Webcam.on("load", function () {
-        const livecam = document.querySelectorAll("#my_camera video");
-        livecam[0].style.transform = "none";
-        livecam[0].width = cameras._videoLive.width;
-        livecam[0].height = cameras._videoLive.height;
-
-        cameras._videoLive = livecam[0];
-        cameras._canvas.style.transform = "none";
-        cameras._videoLive.classList.add("video");
-        cameras._snap.style = "display:block";
-      });
-
-      Webcam.on("live", function () {
-        // if (this.faceRunsInterval) clearInterval(cameras.faceRunsInterval);
-        // cameras.faceRunsInterval = setInterval(cameras.detectFaces,frame 50);
-        cameras._snap.style = "display:block";
-        cameras._retake.style = "display:none";
-        cameras._confirm.style = "display:none";
-      });
-
-      Webcam.on("error", function (err) {
-        console.log("error: ", err);
-      });
-
-      this._retake.addEventListener("click", function () {
-        cameras.startAndroidStream();
-        cameras.ctx.clearRect(0, 0, cameras._canvas.width, cameras._canvas.height);
-        Webcam.unfreeze();
-      });
-
-      this._snap.addEventListener("click", function () {
-        LoadingAnimation.display();
-        Webcam.freeze();
-
-        Webcam.snap(async function (data_uri, frame, context) {
-          cameras._snap.style = "display:none";
-          cameras._retake.style = "display:block";
-          cameras._confirm.style = "display:block";
-          Webcam.reset();
-
-          const prediction = await cameras.preTrainModel.estimateFaces(frame, false);
-          cameras.processResults(cameras.ctx, frame, prediction);
-          // cameras.canvasHelper.drawResult(frame, cameras.ctx, prediction, true, true, true);
-
-          // cameras._message.textContent = "Thực hiện thànhh công";
-
-          const response = await fetch(data_uri);
-          const blob = await response.blob();
-          const fileName = cameras.generateUUID();
-
-          const file = new File([blob], `${fileName}.jpg`, {
-            type: "image/jpeg",
-            lastModified: new Date(),
-          });
-
-          const dataTransfer = new DataTransfer();
-          dataTransfer.items.add(file);
-          cameras._faceRecord.files = dataTransfer.files;
-          LoadingAnimation.dispose();
+          // cameras.faceRunsInterval = setInterval(this.detectFaces, 50);
         });
-      });
+
+        this.mediaRecorder.addEventListener("dataavailable", (e) => {
+          if (this.faceVerify == true) {
+            this._mediaRecorded.src = URL.createObjectURL(e.data);
+
+            const chunks = [];
+            chunks.push(e.data);
+            const fileName = cameras.generateUUID();
+
+            const file = cameras.device === "IOS" ? new File(chunks, `${fileName}.mp4`, { type: "video/mp4" }) : new File(chunks, `${fileName}.webm`, { type: "video/webm" });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            cameras._faceRecord.files = dataTransfer.files;
+          }
+        });
+
+        this._retake.addEventListener("click", function () {
+          if (cameras.faceVerify && cameras.stream.active == false) {
+            cameras.reset();
+            cameras.startStream();
+          }
+        });
+      } else {
+        Webcam.on("load", function () {
+          const get = document.querySelectorAll("#my_camera video");
+          get[0].style.transform = "none";
+          cameras._videoLive = get[0];
+          cameras._videoLive.classList.add("video");
+        });
+
+        Webcam.on("live", function () {
+          if (this.faceRunsInterval) clearInterval(cameras.faceRunsInterval);
+          cameras.faceRunsInterval = setInterval(cameras.detectFaces, 50);
+        });
+
+        Webcam.on("error", function (err) {
+          console.log("error: ", err);
+        });
+
+        this._retake.addEventListener("click", function () {
+          if (cameras.faceVerify) {
+            cameras.startStream();
+            cameras.reset();
+          }
+        });
+      }
     } catch (error) {
       console.log(error);
       this._message.textContent = error.toString();
-    } finally {
-      LoadingAnimation.dispose();
+    }
+  },
+  startStream: async function () {
+    try {
+      if (cameras.device === "IOS") {
+        cameras.stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: { facingMode: "user" },
+        });
+
+        this._videoLive.srcObject = cameras.stream;
+
+        let options;
+        if (MediaRecorder.isTypeSupported("video/mp4")) {
+          options = { mimeType: "video/mp4" };
+        } else if (MediaRecorder.isTypeSupported("video/webm")) {
+          options = { mimeType: "video/webm" };
+        } else {
+          console.error("no suitable mimetype found for this device");
+          this._message.textContent = "Trình duyệt không hỗ trợ camera";
+        }
+
+        if (options) {
+          this.isMediaRecorderSupported = true;
+          this._message.textContent = "Đưa camera lại gần đến khi nhận diện được khuôn mặt";
+          this.mediaRecorder = new MediaRecorder(cameras.stream, options);
+        }
+      } else {
+        this._videoLive = document.querySelector("#my_camera");
+
+        Webcam.set({ image_format: "jpeg", jpeg_quality: 90, flip_horiz: true });
+        Webcam.attach(this._videoLive);
+      }
+    } catch (error) {
+      console.log("init camera stream failure: ", error);
+      this._message.textContent = "Trình duyệt không hỗ trợ camera: " + error.toString();
     }
   },
   detectFaces: async function () {
@@ -354,42 +281,31 @@ const cameras = {
       // const estimationConfig = { flipHorizontal: true };
       const prediction = await cameras.preTrainModel.estimateFaces(cameras._videoLive, false);
 
-      cameras.processResults(cameras.ctx, cameras._videoLive, prediction);
+      cameras.processResults(cameras.ctx, prediction);
     } catch (error) {
       console.log("preTrainModel not found: ", error);
     }
   },
-  processResults: function (ctx, livecam, prediction) {
+  processResults: function (ctx, prediction) {
     try {
       if (prediction == undefined || prediction.length == 0) {
         this.reset("không tìm thấy khuôn mặt trong khung hình");
-        cameras.canvasHelper.drawResult(livecam, ctx, prediction, false, false, false);
+        cameras.canvasHelper.drawResult(cameras._videoLive, ctx, prediction, false, false, false);
       } else if (prediction.length > 1) {
         this.reset("chỉ cho phép 1 khuôn mặt trong khung hình");
-        cameras.canvasHelper.drawResult(livecam, ctx, prediction, true, false, false);
+        cameras.canvasHelper.drawResult(cameras._videoLive, ctx, prediction, true, false, false);
       } else {
         const probability = prediction[0].probability[0];
 
-        if (prediction[0].topLeft[0] < 30 || prediction[0].topLeft[0] > 290 || prediction[0].topLeft[1] < 0 || prediction[0].topLeft[1] > 250 || probability < (cameras.device == "IOS" ? 0.995 : 0.998)) {
-          this.reset("Giữ cho khuôn mặt ở chính giữa màn hình và không bị che");
-          // this.reset("move the head to the center of the circle");
-
-          cameras.canvasHelper.drawResult(livecam, ctx, prediction, true, true, false);
+        if (prediction[0].topLeft[0] < 30 || prediction[0].topLeft[0] > 290 || prediction[0].topLeft[1] < 0 || prediction[0].topLeft[1] > 250 || probability < 0.995) {
+          this.reset("Đưa camera lại gần khuôn mặt");
+          cameras.canvasHelper.drawResult(cameras._videoLive, ctx, prediction, true, true, false);
         } else {
-          let mss = "";
-          if (cameras.device === "IOS") {
-            this.start();
-            const timing = cameras.timer.getTime();
-            if (timing > 4) mss = `<p>Nhìn sang <strong style="color:${cameras.themes.main}">trái</strong> màn hình</p>`;
-            else if (timing <= 4 && timing > 2) mss = `<p>Nhìn <strong style="color:${cameras.themes.main}">thẳng</strong> vào màn hình</p>`;
-            else if (timing <= 2 && timing > 0) mss = `<p>Nhìn sang <strong style="color:${cameras.themes.main}">phải</strong> màn hình</p>`;
-            else mss = "Thực hiện thành công";
-          } else {
-            mss = "Thực hiện thành công";
-          }
+          this.start();
+          this._message.textContent = cameras.device === "IOS" ? "Quay mặt từ từ theo hướng từ phải qua trái" : `Giữ khuôn mặt ở chính giữa khung hình`;
+          if (cameras.device !== "IOS") this._timer.textContent = ((cameras.RECSECONDS - cameras.timer.getTime()) / cameras.RECSECONDS) * 100 + "%";
 
-          this._message.innerHTML = mss;
-          cameras.canvasHelper.drawResult(livecam, ctx, prediction, false, true, true);
+          cameras.canvasHelper.drawResult(cameras._videoLive, ctx, prediction, false, true, true);
         }
       }
     } catch (error) {
@@ -441,11 +357,8 @@ const cameras = {
       }
     },
     drawResult: function (frame, ctx, prediction, boundingBox, showKeypoints, showFaceLine) {
-      if (cameras.device === "IOS") {
-        ctx.clearRect(0, 0, cameras._canvas.width, cameras._canvas.height);
-      } else {
-        ctx.drawImage(frame, 0, 0, cameras._videoLive.width, cameras._videoLive.height);
-      }
+      ctx.clearRect(0, 0, cameras._canvas.width, cameras._canvas.height);
+      // cameras.canvasHelper.drawCircle(ctx, cameras.timer.getTime());
 
       prediction.map((pred) => {
         if (boundingBox) {
@@ -501,7 +414,7 @@ const cameras = {
       progressValue++;
       // cameras.canvasHelper.drawCircle(cameras.ctx, progressValue / 100);
       cameras._timer.textContent = `${progressValue}%`;
-      cameras._progressBar.style.background = `conic-gradient(${cameras.themes.main} ${progressValue * 3.6}deg,${cameras.themes.primary} ${progressValue * 3.6}deg)`;
+      cameras._progressBar.style.background = `conic-gradient(#4d5bf9 ${progressValue * 3.6}deg,#cadcff ${progressValue * 3.6}deg)`;
       if (progressValue == progressEndValue) {
         clearInterval(cameras.progressInterval);
       }
@@ -538,29 +451,33 @@ const cameras = {
     return "unknown";
   },
   start: function () {
-    if (cameras.timer.getStatus() == 0 && cameras.faceVerify == false && cameras.device === "IOS" && cameras.isMediaRecorderSupported && cameras.stream.active) {
+    if (cameras.timer.getStatus() == 0 && cameras.faceVerify == false) {
       cameras.timer.start(1000);
-      cameras.runProgressBar();
-      cameras.mediaRecorder.start();
+
+      if (cameras.device === "IOS" && cameras.isMediaRecorderSupported && cameras.stream.active) {
+        cameras.runProgressBar();
+        cameras.mediaRecorder.start();
+      }
     }
   },
   reset: function (message = "") {
     cameras._message.textContent = message;
     cameras.faceVerify = false;
+    cameras.timer.stop();
+    cameras.timer.reset(cameras.RECSECONDS);
+    clearInterval(cameras.progressInterval);
+
+    this._confirm.style = "display:none";
+    this._retake.style = "display:none";
 
     if (this.device === "IOS" && this.isMediaRecorderSupported) {
-      cameras.timer.stop();
-      cameras.timer.reset(cameras.RECSECONDS);
-      clearInterval(cameras.progressInterval);
-      this._confirm.style = "display:none";
-      this._retake.style = "display:none";
       this._mediaRecorded.style = "display:none";
       this._progressBar.style = "display:block";
       this._canvas.style = "display:block";
       this._videoLive.style = "display:block";
       cameras.mediaRecorder.stop();
     } else {
-      this._confirm.style = "display:none";
+      Webcam.unfreeze();
     }
   },
   stop: function () {
