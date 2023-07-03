@@ -19,7 +19,10 @@
 
   <body>
     <form id="FaceAuthenForm">
-      <div id="timer"> <h3> Xác thực khuôn mặt </h3></div>
+      <div id="header">
+        <h3>Xác thực khuôn mặt</h3>
+        <div id="timer">0%</div>
+      </div>
 
       <div class="box" id="progressBar">
         <video class="video" autoplay muted playsinline id="videoLive" width="650px" height="480px"> </video>
@@ -33,7 +36,6 @@
 
       <div class="btngroup">
         <input id="faceRecord" type="file" name="videoFile" style="display: none;">
-        <input id="imgfaceRecord" type="hidden" name="imgFile" value />
         <button type="button" id="snap">Chụp ảnh</button>
         <button type="button" id="retake">Thực hiện lại</button>
         <button type="button" id="confirm">Xác nhận</button>

@@ -16,7 +16,8 @@
     aspect-ratio: 1;
     margin: 24px auto;
     border-radius: 50%;
-    background-color: #6b9fff;
+    background-color: var(--primary);
+    /* background-color: #6b9fff; */
     z-index: 8;
 }
 
