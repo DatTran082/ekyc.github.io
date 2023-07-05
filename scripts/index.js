@@ -309,8 +309,7 @@ const cameras = {
 
       this._retake.addEventListener("click", function () {
         cameras.startAndroidStream();
-        // cameras.ctx.clearRect(0, 0, cameras._canvas.width, cameras._canvas.height);
-        cameras.reset();
+        cameras.ctx.clearRect(0, 0, cameras._canvas.width, cameras._canvas.height);
         Webcam.unfreeze();
       });
 
@@ -444,11 +443,9 @@ const cameras = {
       }
     },
     drawResult: function (frame, ctx, prediction, boundingBox, showKeypoints, showFaceLine) {
-      if (cameras.device === "IOS") {
-        ctx.clearRect(0, 0, cameras._canvas.width, cameras._canvas.height);
-      } else {
-        ctx.drawImage(frame, 0, 0, cameras._canvas.width, cameras._canvas.height);
-      }
+      ctx.clearRect(0, 0, cameras._canvas.width, cameras._canvas.height);
+
+      // ctx.drawImage(frame, 0, 0, cameras._canvas.width, cameras._canvas.height);
 
       prediction.map((pred) => {
         if (boundingBox) {
@@ -550,14 +547,14 @@ const cameras = {
   reset: function (message = "") {
     cameras._message.textContent = message;
     cameras.faceVerify = false;
-    this._confirm.style = "display:none";
-    this._retake.style = "display:none";
-    this._mediaRecorded.style = "display:none";
 
     if (this.device === "IOS" && this.isMediaRecorderSupported) {
       cameras.timer.stop();
       cameras.timer.reset(cameras.RECSECONDS);
       clearInterval(cameras.progressInterval);
+      this._confirm.style = "display:none";
+      this._retake.style = "display:none";
+      this._mediaRecorded.style = "display:none";
       this._progressBar.style = "display:block";
       this._canvas.style = "display:block";
       this._videoLive.style = "display:block";

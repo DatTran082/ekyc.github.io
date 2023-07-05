@@ -254,7 +254,6 @@ const cameras = {
   },
   startAndroidStream: async function () {
     try {
-      // this._videoLive = document.querySelector("#my_camera");
       const livecamera = document.querySelector("#my_camera");
       this._message.textContent = "Chụp ảnh chính diện khuôn mặt";
 
@@ -301,8 +300,12 @@ const cameras = {
 
       this._retake.addEventListener("click", function () {
         cameras.startAndroidStream();
-        cameras.ctx.clearRect(0, 0, cameras._canvas.width, cameras._canvas.height);
+        cameras.reset();
         Webcam.unfreeze();
+
+        cameras._confirm.style = "display:none";
+        cameras._retake.style = "display:none";
+        cameras._mediaRecorded.style = "display:none";
       });
 
       this._snap.addEventListener("click", function () {
@@ -318,10 +321,7 @@ const cameras = {
           Webcam.reset();
 
           const prediction = await cameras.preTrainModel.estimateFaces(frame, false);
-          //cameras.processResults(cameras.ctx, frame, prediction);
-          // cameras.canvasHelper.drawResult(frame, cameras.ctx, prediction, true, true, true);
-
-          // cameras._message.textContent = "Thực hiện thànhh công";
+          cameras.processResults(cameras.ctx, frame, prediction);
 
           const response = await fetch(data_uri);
           const blob = await response.blob();
@@ -437,11 +437,10 @@ const cameras = {
       }
     },
     drawResult: function (frame, ctx, prediction, boundingBox, showKeypoints, showFaceLine) {
-      if (cameras.device === "IOS") {
-        ctx.clearRect(0, 0, cameras._canvas.width, cameras._canvas.height);
-      } else {
-        ctx.drawImage(frame, 0, 0, cameras._videoLive.width, cameras._videoLive.height);
+      if (cameras.device !== "IOS") {
+        return;
       }
+      // ctx.drawImage(frame, 0, 0, cameras._videoLive.width, cameras._videoLive.height);
 
       prediction.map((pred) => {
         if (boundingBox) {
@@ -548,9 +547,6 @@ const cameras = {
       cameras.timer.stop();
       cameras.timer.reset(cameras.RECSECONDS);
       clearInterval(cameras.progressInterval);
-      this._confirm.style = "display:none";
-      this._retake.style = "display:none";
-      this._mediaRecorded.style = "display:none";
       this._progressBar.style = "display:block";
       this._canvas.style = "display:block";
       this._videoLive.style = "display:block";

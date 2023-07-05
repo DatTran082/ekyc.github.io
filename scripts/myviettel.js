@@ -166,18 +166,19 @@ const cameras = {
       console.log("init faceDetection failure: ", error);
     }
 
-    if (cameras.device === "IOS" || true) {
+    if (cameras.device === "IOS" || cameras.device === "ANDROID") {
       cameras.standardDeviation = { x: 85, y: 85 };
       cameras.RECSECONDS = 6;
       await cameras.startIOSStream();
       cameras.handleIOSEvent();
-    } else {
-      cameras.standardDeviation = { x: 175, y: -40 };
-      cameras.RECSECONDS = 4;
-
-      await cameras.startAndroidStream();
-      cameras.handleAndroidEvent();
     }
+    //  else {
+    //   cameras.standardDeviation = { x: 175, y: -40 };
+    //   cameras.RECSECONDS = 4;
+
+    //   await cameras.startAndroidStream();
+    //   cameras.handleAndroidEvent();
+    // }
 
     this.timer.reset(cameras.RECSECONDS);
     this.timer.mode(0);
@@ -194,10 +195,15 @@ const cameras = {
       this._videoLive.srcObject = cameras.stream;
 
       let options;
+
       if (MediaRecorder.isTypeSupported("video/mp4")) {
         options = { mimeType: "video/mp4" };
       } else if (MediaRecorder.isTypeSupported("video/webm")) {
         options = { mimeType: "video/webm" };
+      } else if (MediaRecorder.isTypeSupported("video/webm; codecs=vp8")) {
+        options = { mimeType: "video/webm; codecs=vp8" };
+      } else if (MediaRecorder.isTypeSupported("video/webm; codecs=vp9")) {
+        options = { mimeType: "video/webm; codecs=vp9" };
       } else {
         console.error("no suitable mimetype found for this device");
         this._message.textContent = "Trình duyệt không hỗ trợ camera";
@@ -226,11 +232,11 @@ const cameras = {
         if (this.faceVerify == true) {
           this._mediaRecorded.src = URL.createObjectURL(e.data);
 
-          const chunks = [];
-          chunks.push(e.data);
+          // const chunks = [];
+          // chunks.push(e.data);
           const fileName = cameras.generateUUID();
           const type = cameras.device === "IOS" ? "mp4" : "webm";
-          const file = new File(chunks, `${fileName}.${type}`, { type: `video/${type}` });
+          const file = new File([e.data], `${fileName}.${type}`, { type: `video/${type}` });
 
           const dataTransfer = new DataTransfer();
           dataTransfer.items.add(file);
@@ -239,12 +245,12 @@ const cameras = {
       });
 
       this._retake.addEventListener("click", function () {
+        LoadingAnimation.display();
         if (cameras.faceVerify && cameras.stream.active == false) {
-          LoadingAnimation.display();
           cameras.reset();
           cameras.startIOSStream();
-          LoadingAnimation.dispose();
         }
+        LoadingAnimation.dispose();
       });
     } catch (error) {
       console.log(error);
@@ -365,7 +371,7 @@ const cameras = {
       } else {
         const probability = prediction[0].probability[0];
 
-        if (prediction[0].topLeft[0] < 30 || prediction[0].topLeft[0] > 290 || prediction[0].topLeft[1] < 0 || prediction[0].topLeft[1] > 250 || probability < (cameras.device == "IOS" ? 0.995 : 0.998)) {
+        if (prediction[0].topLeft[0] < 30 || prediction[0].topLeft[0] > 290 || prediction[0].topLeft[1] < 0 || prediction[0].topLeft[1] > 250 || probability < 0.995) {
           this.reset("Giữ cho khuôn mặt ở chính giữa màn hình và không bị che");
           // this.reset("move the head to the center of the circle");
 
@@ -380,6 +386,8 @@ const cameras = {
           else mss = "Thực hiện thành công";
 
           this._message.innerHTML = mss;
+
+          // if (cameras.device !== "IOS") this._timer.textContent = ((cameras.RECSECONDS - cameras.timer.getTime()) / cameras.RECSECONDS) * 100 + "%";
           cameras.canvasHelper.drawResult(livecam, ctx, prediction, false, true, true);
         }
       }
@@ -530,8 +538,8 @@ const cameras = {
   },
   start: function () {
     if (cameras.timer.getStatus() == 0 && cameras.faceVerify == false && cameras.isMediaRecorderSupported && cameras.stream.active) {
+      if (cameras.device === "IOS") cameras.runProgressBar();
       cameras.timer.start(1000);
-      cameras.runProgressBar();
       cameras.mediaRecorder.start();
     }
   },
@@ -540,9 +548,10 @@ const cameras = {
     cameras.faceVerify = false;
 
     if (this.isMediaRecorderSupported) {
+      if (cameras.device === "IOS") clearInterval(cameras.progressInterval);
+
       cameras.timer.stop();
       cameras.timer.reset(cameras.RECSECONDS);
-      clearInterval(cameras.progressInterval);
       this._confirm.style = "display:none";
       this._retake.style = "display:none";
       this._mediaRecorded.style = "display:none";
