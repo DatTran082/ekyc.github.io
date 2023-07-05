@@ -172,9 +172,9 @@ const cameras = {
       await cameras.startIOSStream();
       cameras.handleIOSEvent();
     } else {
+      cameras._mediaRecorded = document.querySelector("#imageRecorded");
       cameras.standardDeviation = { x: 175, y: -40 };
       cameras.RECSECONDS = 4;
-
       await cameras.startAndroidStream();
       cameras.handleAndroidEvent();
     }
@@ -229,9 +229,8 @@ const cameras = {
           const chunks = [];
           chunks.push(e.data);
           const fileName = cameras.generateUUID();
-          const type = cameras.device === "IOS" ? "mp4" : "webm";
-          const file = new File(chunks, `${fileName}.${type}`, { type: `video/${type}` });
 
+          const file = new File(chunks, `${fileName}.mp4`, { type: "video/mp4" });
           const dataTransfer = new DataTransfer();
           dataTransfer.items.add(file);
           cameras._faceRecord.files = dataTransfer.files;
@@ -314,10 +313,12 @@ const cameras = {
           cameras._snap.style = "display:none";
           cameras._retake.style = "display:block";
           cameras._confirm.style = "display:block";
+          cameras._mediaRecorded.style = "display:block";
+          cameras._mediaRecorded.src = data_uri;
           Webcam.reset();
 
           const prediction = await cameras.preTrainModel.estimateFaces(frame, false);
-          cameras.processResults(cameras.ctx, frame, prediction);
+          //cameras.processResults(cameras.ctx, frame, prediction);
           // cameras.canvasHelper.drawResult(frame, cameras.ctx, prediction, true, true, true);
 
           // cameras._message.textContent = "Thực hiện thànhh công";
