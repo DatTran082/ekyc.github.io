@@ -128,7 +128,6 @@ const cameras = {
   _timer: null,
   _canvas: null,
   _loader: null,
-  _snap: null,
   timer: null,
   RECSECONDS: 6,
   faceVerify: false,
@@ -151,13 +150,15 @@ const cameras = {
     this._mediaRecorded = document.querySelector("#videoRecorded");
     this._timer = document.querySelector("#timer");
     this._message = document.querySelector("#message");
-    this._snap = document.querySelector("#snap");
     this._canvas = document.querySelector("#canvas");
     this._progressBar = document.querySelector("#progressBar");
 
     this.device = cameras.getMobileOperatingSystem();
     this.ctx = this._canvas.getContext("2d");
     this.timer = new _timerHandle(this.handleTimer);
+    cameras.standardDeviation = { x: 85, y: 85 };
+    this.timer.reset(cameras.RECSECONDS);
+    this.timer.mode(0);
 
     LoadingAnimation.display();
     try {
@@ -166,20 +167,7 @@ const cameras = {
       console.log("init faceDetection failure: ", error);
     }
 
-    cameras.standardDeviation = { x: 85, y: 85 };
-    cameras.RECSECONDS = 6;
     await cameras.startIOSStream();
-    // if (cameras.device === "IOS" || cameras.device === "ANDROID")
-    //  else {
-    //   cameras.standardDeviation = { x: 175, y: -40 };
-    //   cameras.RECSECONDS = 4;
-
-    //   await cameras.startAndroidStream();
-    //   cameras.handleAndroidEvent();
-    // }
-
-    this.timer.reset(cameras.RECSECONDS);
-    this.timer.mode(0);
 
     LoadingAnimation.dispose();
   },
@@ -254,97 +242,6 @@ const cameras = {
           cameras.startIOSStream();
         }
         LoadingAnimation.dispose();
-      });
-    } catch (error) {
-      console.log(error);
-      this._message.textContent = error.toString();
-    } finally {
-      LoadingAnimation.dispose();
-    }
-  },
-  startAndroidStream: async function () {
-    try {
-      // this._videoLive = document.querySelector("#my_camera");
-      const livecamera = document.querySelector("#my_camera");
-      this._message.textContent = "Chụp ảnh chính diện khuôn mặt";
-
-      Webcam.set({
-        width: this._progressBar.width,
-        height: this._progressBar.height,
-        image_format: "jpeg",
-        jpeg_quality: 90,
-        force_flash: false,
-        flip_horiz: true,
-        fps: 45,
-      });
-
-      Webcam.attach(livecamera);
-    } catch (error) {
-      console.log("init camera stream failure: ", error);
-      this._message.textContent = "Trình duyệt không hỗ trợ camera: " + error.toString();
-    }
-  },
-  handleAndroidEvent: function () {
-    LoadingAnimation.display();
-    try {
-      Webcam.on("load", function () {
-        const livecam = document.querySelectorAll("#my_camera video");
-        livecam[0].style.transform = "none";
-        livecam[0].width = cameras._videoLive.width;
-        livecam[0].height = cameras._videoLive.height;
-
-        cameras._videoLive = livecam[0];
-        cameras._canvas.style.transform = "none";
-        cameras._videoLive.classList.add("video");
-        cameras._snap.style = "display:block";
-      });
-
-      Webcam.on("live", function () {
-        cameras._snap.style = "display:block";
-        cameras._retake.style = "display:none";
-        cameras._confirm.style = "display:none";
-      });
-
-      Webcam.on("error", function (err) {
-        console.log("error: ", err);
-      });
-
-      this._retake.addEventListener("click", function () {
-        cameras.startAndroidStream();
-        cameras.ctx.clearRect(0, 0, cameras._canvas.width, cameras._canvas.height);
-        Webcam.unfreeze();
-      });
-
-      this._snap.addEventListener("click", function () {
-        LoadingAnimation.display();
-        Webcam.freeze();
-
-        Webcam.snap(async function (data_uri, frame, context) {
-          cameras._snap.style = "display:none";
-          cameras._retake.style = "display:block";
-          cameras._confirm.style = "display:block";
-          Webcam.reset();
-
-          const prediction = await cameras.preTrainModel.estimateFaces(frame, false);
-          cameras.processResults(cameras.ctx, frame, prediction);
-          // cameras.canvasHelper.drawResult(frame, cameras.ctx, prediction, true, true, true);
-
-          // cameras._message.textContent = "Thực hiện thànhh công";
-
-          const response = await fetch(data_uri);
-          const blob = await response.blob();
-          const fileName = cameras.generateUUID();
-
-          const file = new File([blob], `${fileName}.jpg`, {
-            type: "image/jpeg",
-            lastModified: new Date(),
-          });
-
-          const dataTransfer = new DataTransfer();
-          dataTransfer.items.add(file);
-          cameras._faceRecord.files = dataTransfer.files;
-          LoadingAnimation.dispose();
-        });
       });
     } catch (error) {
       console.log(error);
