@@ -256,6 +256,7 @@ const cameras = {
     try {
       const livecamera = document.querySelector("#my_camera");
       this._message.textContent = "Chụp ảnh chính diện khuôn mặt";
+      this._timer.textContent = "";
 
       Webcam.set({
         width: this._progressBar.width,
@@ -274,8 +275,8 @@ const cameras = {
     }
   },
   handleAndroidEvent: function () {
-    LoadingAnimation.display();
     try {
+      LoadingAnimation.display();
       Webcam.on("load", function () {
         const livecam = document.querySelectorAll("#my_camera video");
         livecam[0].style.transform = "none";
@@ -285,13 +286,13 @@ const cameras = {
         cameras._videoLive = livecam[0];
         cameras._canvas.style.transform = "none";
         cameras._videoLive.classList.add("video");
-        cameras._snap.style = "display:block";
       });
 
       Webcam.on("live", function () {
         cameras._snap.style = "display:block";
         cameras._retake.style = "display:none";
         cameras._confirm.style = "display:none";
+        cameras._mediaRecorded.style = "display:none";
       });
 
       Webcam.on("error", function (err) {
@@ -299,42 +300,26 @@ const cameras = {
       });
 
       this._retake.addEventListener("click", function () {
+        LoadingAnimation.display();
         cameras.startAndroidStream();
-        cameras.reset();
         Webcam.unfreeze();
-
-        cameras._confirm.style = "display:none";
-        cameras._retake.style = "display:none";
-        cameras._mediaRecorded.style = "display:none";
+        LoadingAnimation.dispose();
       });
 
       this._snap.addEventListener("click", function () {
-        LoadingAnimation.display();
         Webcam.freeze();
 
         Webcam.snap(async function (data_uri, frame, context) {
+          LoadingAnimation.display();
           cameras._snap.style = "display:none";
           cameras._retake.style = "display:block";
-          cameras._confirm.style = "display:block";
           cameras._mediaRecorded.style = "display:block";
           cameras._mediaRecorded.src = data_uri;
+
           Webcam.reset();
 
           const prediction = await cameras.preTrainModel.estimateFaces(frame, false);
-          cameras.processResults(cameras.ctx, frame, prediction);
-
-          const response = await fetch(data_uri);
-          const blob = await response.blob();
-          const fileName = cameras.generateUUID();
-
-          const file = new File([blob], `${fileName}.jpg`, {
-            type: "image/jpeg",
-            lastModified: new Date(),
-          });
-
-          const dataTransfer = new DataTransfer();
-          dataTransfer.items.add(file);
-          cameras._faceRecord.files = dataTransfer.files;
+          cameras.processFrameResults(cameras.ctx, frame, prediction);
           LoadingAnimation.dispose();
         });
       });
@@ -350,42 +335,78 @@ const cameras = {
       // const estimationConfig = { flipHorizontal: true };
       const prediction = await cameras.preTrainModel.estimateFaces(cameras._videoLive, false);
 
-      cameras.processResults(cameras.ctx, cameras._videoLive, prediction);
+      cameras.processLivenessResults(cameras.ctx, cameras._videoLive, prediction);
     } catch (error) {
       console.log("preTrainModel not found: ", error);
     }
   },
-  processResults: function (ctx, livecam, prediction) {
+  processLivenessResults: function (ctx, livecam, prediction) {
     try {
       if (prediction == undefined || prediction.length == 0) {
-        this.reset("không tìm thấy khuôn mặt trong khung hình");
+        this.reset("Không tìm thấy khuôn mặt trong khung hình");
         cameras.canvasHelper.drawResult(livecam, ctx, prediction, false, false, false);
       } else if (prediction.length > 1) {
-        this.reset("chỉ cho phép 1 khuôn mặt trong khung hình");
+        this.reset("Chỉ cho phép 1 khuôn mặt trong khung hình");
         cameras.canvasHelper.drawResult(livecam, ctx, prediction, true, false, false);
       } else {
         const probability = prediction[0].probability[0];
 
         if (prediction[0].topLeft[0] < 30 || prediction[0].topLeft[0] > 290 || prediction[0].topLeft[1] < 0 || prediction[0].topLeft[1] > 250 || probability < (cameras.device == "IOS" ? 0.995 : 0.998)) {
           this.reset("Giữ cho khuôn mặt ở chính giữa màn hình và không bị che");
-          // this.reset("move the head to the center of the circle");
 
           cameras.canvasHelper.drawResult(livecam, ctx, prediction, true, true, false);
         } else {
           let mss = "";
-          if (cameras.device === "IOS") {
-            this.start();
-            const timing = cameras.timer.getTime();
-            if (timing > 4) mss = `<p>Nhìn sang <strong style="color:${cameras.themes.main}">trái</strong> màn hình</p>`;
-            else if (timing <= 4 && timing > 2) mss = `<p>Nhìn <strong style="color:${cameras.themes.main}">thẳng</strong> vào màn hình</p>`;
-            else if (timing <= 2 && timing > 0) mss = `<p>Nhìn sang <strong style="color:${cameras.themes.main}">phải</strong> màn hình</p>`;
-            else mss = "Thực hiện thành công";
-          } else {
-            mss = "Thực hiện thành công";
-          }
+          this.start();
+          const timing = cameras.timer.getTime();
+          if (timing > 4) mss = `<p>Nhìn sang <strong style="color:${cameras.themes.main}">trái</strong> màn hình</p>`;
+          else if (timing <= 4 && timing > 2) mss = `<p>Nhìn <strong style="color:${cameras.themes.main}">thẳng</strong> vào màn hình</p>`;
+          else if (timing <= 2 && timing > 0) mss = `<p>Nhìn sang <strong style="color:${cameras.themes.main}">phải</strong> màn hình</p>`;
+          else mss = "Thực hiện thành công";
 
           this._message.innerHTML = mss;
           cameras.canvasHelper.drawResult(livecam, ctx, prediction, false, true, true);
+        }
+      }
+    } catch (error) {
+      cameras.reset();
+      console.log("error while draw prediction: ", error);
+      cameras._message.textContent = error.toString();
+    }
+  },
+  processFrameResults: function (ctx, frame, prediction) {
+    try {
+      if (prediction == undefined || prediction.length == 0) {
+        this.reset("Không tìm thấy khuôn mặt trong khung hình vui lòng chụp lại ảnh");
+      } else if (prediction.length > 1) {
+        this.reset("Chỉ cho phép 1 khuôn mặt trong khung hình vui lòng chụp lại ảnh");
+      } else {
+        const probability = prediction[0].probability[0];
+
+        if (prediction[0].topLeft[0] < 30 || prediction[0].topLeft[0] > 290 || prediction[0].topLeft[1] < 0 || prediction[0].topLeft[1] > 250) {
+          this.reset("Giữ cho khuôn mặt ở chính giữa và cách màn hình khoảng 25cm");
+        } else if (probability < 0.998) {
+          this.reset("Giữ cho khuôn mặt không bị che chắn và cách màn hình khoảng 25cm");
+        } else {
+          this._message.innerHTML = "Thực hiện thành công";
+          cameras._confirm.style = "display:block";
+
+          const loadFileToDocument = async function () {
+            const response = await fetch(cameras._mediaRecorded.src);
+            const blob = await response.blob();
+            const fileName = cameras.generateUUID();
+
+            const file = new File([blob], `${fileName}.jpg`, {
+              type: "image/jpeg",
+              lastModified: new Date(),
+            });
+
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            cameras._faceRecord.files = dataTransfer.files;
+          };
+
+          loadFileToDocument();
         }
       }
     } catch (error) {
@@ -437,10 +458,7 @@ const cameras = {
       }
     },
     drawResult: function (frame, ctx, prediction, boundingBox, showKeypoints, showFaceLine) {
-      if (cameras.device !== "IOS") {
-        return;
-      }
-      // ctx.drawImage(frame, 0, 0, cameras._videoLive.width, cameras._videoLive.height);
+      ctx.clearRect(0, 0, cameras._canvas.width, cameras._canvas.height);
 
       prediction.map((pred) => {
         if (boundingBox) {
@@ -547,6 +565,9 @@ const cameras = {
       cameras.timer.stop();
       cameras.timer.reset(cameras.RECSECONDS);
       clearInterval(cameras.progressInterval);
+      this._confirm.style = "display:none";
+      this._retake.style = "display:none";
+      this._mediaRecorded.style = "display:none";
       this._progressBar.style = "display:block";
       this._canvas.style = "display:block";
       this._videoLive.style = "display:block";
@@ -555,15 +576,14 @@ const cameras = {
       this._confirm.style = "display:none";
     }
   },
-  stop: function () {
+  stop: async function () {
     this._confirm.style = "display:block";
     this._retake.style = "display:block";
-
-    cameras.timer.stop();
-    clearInterval(cameras.faceRunsInterval);
     cameras.faceVerify = true;
 
     if (cameras.device === "IOS" && this.isMediaRecorderSupported) {
+      cameras.timer.stop();
+      clearInterval(cameras.faceRunsInterval);
       this._mediaRecorded.style = "display:block";
       this._canvas.style = "display:none";
       this._videoLive.style = "display:none";
@@ -574,8 +594,6 @@ const cameras = {
     }
   },
   handleTimer: function (time) {
-    // cameras._timer.textContent = "recording: " + time + " s";
-    // cameras.canvasHelper.drawCircle(cameras.ctx, ((5 - time) / 5) * 100);
     if (time == 0) {
       cameras.stop();
       cameras._message.textContent = "Thực hiện thànhh công";
