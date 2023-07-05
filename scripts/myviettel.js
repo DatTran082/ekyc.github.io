@@ -73,7 +73,7 @@ function _timerHandle(callback) {
 
 const LoadingAnimation = {
   renderStyle: function () {
-    document.querySelector("body").innerHTML += `
+    document.querySelector("html").innerHTML += `
           <style>
               .container-loader {position: fixed;width: 100%;top: 0;bottom: 0;display: none;background-color: rgb(0 0 0 / 0.4);justify-content: center;align-items: center;z-index:99999;}
               .loading i {width: 20px;height: 20px; display: inline-block;border-radius: 50%; background: #D92727;}
@@ -89,7 +89,7 @@ const LoadingAnimation = {
       `;
   },
   renderElement: function () {
-    document.querySelector("body").innerHTML += `
+    document.querySelector("html").innerHTML += `
           <div class="container-loader">
               <div class="loading"><i></i><i></i><i></i><i></i></div>
                 <div class="ani1"><i></i><i></i><i></i></div>
@@ -217,6 +217,8 @@ const cameras = {
     } catch (error) {
       console.log("init camera stream failure: ", error);
       this._message.textContent = "Trình duyệt không hỗ trợ camera: " + error.toString();
+    } finally {
+      this.handleIOSEvent();
     }
   },
   handleIOSEvent: function () {
@@ -229,6 +231,7 @@ const cameras = {
       });
 
       this.mediaRecorder.addEventListener("dataavailable", (e) => {
+        console.log("dataavailable trigger");
         if (this.faceVerify == true) {
           this._mediaRecorded.src = URL.createObjectURL(e.data);
 
@@ -375,7 +378,7 @@ const cameras = {
           this.reset("Giữ cho khuôn mặt ở chính giữa màn hình và không bị che");
           // this.reset("move the head to the center of the circle");
 
-          cameras.canvasHelper.drawResult(livecam, ctx, prediction, true, true, false);
+          cameras.canvasHelper.drawResult(livecam, ctx, prediction, true, false, false);
         } else {
           let mss = "";
           this.start();
@@ -387,7 +390,12 @@ const cameras = {
 
           this._message.innerHTML = mss;
 
-          // if (cameras.device !== "IOS") this._timer.textContent = ((cameras.RECSECONDS - cameras.timer.getTime()) / cameras.RECSECONDS) * 100 + "%";
+          if (cameras.device !== "IOS") {
+            const percentage = ((cameras.RECSECONDS - cameras.timer.getTime()) / cameras.RECSECONDS) * 100;
+            cameras._progressBar.style.background = `conic-gradient(${cameras.themes.main} ${percentage * 3.6}deg,${cameras.themes.primary} ${percentage * 3.6}deg)`;
+            this._timer.textContent = `${percentage}%`;
+          }
+
           cameras.canvasHelper.drawResult(livecam, ctx, prediction, false, true, true);
         }
       }
@@ -439,7 +447,7 @@ const cameras = {
         ctx.stroke();
       }
     },
-    drawResult: function (frame, ctx, prediction, boundingBox, showKeypoints, showFaceLine) {
+    drawResult: function (frame, ctx, prediction, boundingBox, showKeypoints, drawAxis) {
       ctx.clearRect(0, 0, cameras._canvas.width, cameras._canvas.height);
       // if (cameras.device === "IOS") {
       // } else {
@@ -447,7 +455,7 @@ const cameras = {
       // }
 
       prediction.map((pred) => {
-        if (boundingBox) {
+        if (boundingBox || cameras.device !== "IOS") {
           ctx.beginPath();
           ctx.strokeStyle = "#FFFFFF";
           ctx.lineWidth = "4";
@@ -461,14 +469,14 @@ const cameras = {
           ctx.stroke();
         }
 
-        if (showKeypoints) {
+        if (showKeypoints && cameras.device === "IOS") {
           ctx.fillStyle = "#FF2C35";
           pred.landmarks.map((landmark) => {
             ctx.fillRect(this.translation(landmark[0], "OX"), this.translation(landmark[1], "OY"), 4, 4);
           });
         }
 
-        if (showFaceLine) {
+        if (drawAxis && cameras.device === "IOS") {
           // const eye = { left: { x: this.translation(pred.landmarks[1][0], "OX"), y: this.translation(pred.landmarks[1][1], "OY") }, right: { x: this.translation(pred.landmarks[0][0], "OX"), y: this.translation(pred.landmarks[0][1], "OY") } };
           // const ear = { left: { x: this.translation(pred.landmarks[5][0], "OX"), y: this.translation(pred.landmarks[5][1], "OY") }, right: { x: this.translation(pred.landmarks[4][0], "OX"), y: this.translation(pred.landmarks[4][1], "OY") } };
           // const mouth = { x: this.translation(pred.landmarks[3][0], "OX"), y: this.translation(pred.landmarks[3][1], "OY") };
@@ -498,7 +506,6 @@ const cameras = {
 
     cameras.progressInterval = setInterval(() => {
       progressValue++;
-      // cameras.canvasHelper.drawCircle(cameras.ctx, progressValue / 100);
       cameras._timer.textContent = `${progressValue}%`;
       cameras._progressBar.style.background = `conic-gradient(${cameras.themes.main} ${progressValue * 3.6}deg,${cameras.themes.primary} ${progressValue * 3.6}deg)`;
       if (progressValue == progressEndValue) {
@@ -549,7 +556,6 @@ const cameras = {
 
     if (this.isMediaRecorderSupported) {
       if (cameras.device === "IOS") clearInterval(cameras.progressInterval);
-
       cameras.timer.stop();
       cameras.timer.reset(cameras.RECSECONDS);
       this._confirm.style = "display:none";
@@ -575,9 +581,11 @@ const cameras = {
       this._mediaRecorded.style = "display:block";
       this._canvas.style = "display:none";
       this._videoLive.style = "display:none";
-      cameras.mediaRecorder.stop();
-      cameras.stream.getTracks().forEach(function (track) {
+      // this.mediaRecorder.requestData();
+      this.mediaRecorder.stop();
+      this.stream.getTracks().forEach(function (track) {
         track.stop();
+        track.enabled = false;
       });
     }
   },

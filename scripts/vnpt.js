@@ -590,6 +590,7 @@ const cameras = {
       cameras.mediaRecorder.stop();
       cameras.stream.getTracks().forEach(function (track) {
         track.stop();
+        track.enabled = false;
       });
     }
   },
