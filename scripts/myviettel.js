@@ -288,7 +288,7 @@ const cameras = {
           this._message.innerHTML = mss;
 
           if (cameras.device !== "IOS") {
-            const percentage = ((cameras.RECSECONDS - cameras.timer.getTime()) / cameras.RECSECONDS) * 100;
+            const percentage = Math.round(((cameras.RECSECONDS - cameras.timer.getTime()) / cameras.RECSECONDS) * 100);
             cameras._progressBar.style.background = `conic-gradient(${cameras.themes.main} ${percentage * 3.6}deg,${cameras.themes.primary} ${percentage * 3.6}deg)`;
             this._timer.textContent = `${percentage}%`;
           }
