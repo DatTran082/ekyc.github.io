@@ -237,6 +237,13 @@ const cameras = {
         }
       });
 
+      this.mediaRecorder.addEventListener("stop", function (e) {
+        console.log(e);
+        if (cameras.faceVerify) {
+          cameras._mediaRecorded.src = URL.createObjectURL(e.data);
+        }
+      });
+
       this._retake.addEventListener("click", function () {
         if (cameras.faceVerify && cameras.stream.active == false) {
           LoadingAnimation.display();
@@ -438,7 +445,7 @@ const cameras = {
       if (cameras.device === "IOS") {
         ctx.clearRect(0, 0, cameras._canvas.width, cameras._canvas.height);
       } else {
-        ctx.drawImage(frame, 0, 0, cameras._videoLive.width, cameras._videoLive.height);
+        ctx.drawImage(frame, 0, 0, cameras._canvas.width, cameras._canvas.height);
       }
 
       prediction.map((pred) => {
