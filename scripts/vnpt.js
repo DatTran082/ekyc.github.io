@@ -76,7 +76,7 @@ const LoadingAnimation = {
     document.querySelector("body").innerHTML += `
           <style>
               .container-loader {position: fixed;width: 100%;top: 0;bottom: 0;display: none;background-color: rgb(0 0 0 / 0.4);justify-content: center;align-items: center;z-index:99999;}
-              .loading i {width: 20px;height: 20px; display: inline-block;border-radius: 50%; background: #D92727;}
+              .loading i {width: 20px;height: 20px; display: inline-block;border-radius: 50%; background: #3079FF;}
               .loading i:first-child {animation: loading-ani2 0.5s linear infinite; opacity: 0;transform: translate(-20px); }
               .loading i:nth-child(2),
               .loading i:nth-child(3) { animation: loading-ani3 0.5s linear infinite;}
@@ -84,7 +84,7 @@ const LoadingAnimation = {
               @keyframes loading-ani1 {100% { transform: translate(40px);opacity: 0;}}
               @keyframes loading-ani2 {100% {transform: translate(20px); opacity: 1;}}
               @keyframes loading-ani3 {100% {transform: translate(20px);}}
-              @media only screen and (min-width: 500px) {.container-loader {width: 500px;} .profile-layout .modal-screen { max-width: 500px;} }
+              @media only screen and (min-width: 100%) {.container-loader {width: 100%;} .profile-layout .modal-screen { max-width: 100%;} }
           </style>
       `;
   },
@@ -100,7 +100,7 @@ const LoadingAnimation = {
       `;
   },
   display: function () {
-    document.querySelector(".container-loader").style.display = "flex";
+    document.querySelector(".container-loader").style = "display:flex; z-index: 9999;";
   },
   dispose: function () {
     document.querySelector(".container-loader").style.display = "none";
@@ -143,6 +143,7 @@ const cameras = {
   standardDeviation: { x: 0, y: 0 },
   init: async function () {
     LoadingAnimation.start();
+    LoadingAnimation.display();
     this._faceAuthenForm = document.querySelector("#FaceAuthenForm");
     this._faceRecord = document.querySelector("#faceRecord");
     this._videoLive = document.querySelector("#videoLive");
@@ -159,7 +160,6 @@ const cameras = {
     this.ctx = this._canvas.getContext("2d");
     this.timer = new _timerHandle(this.handleTimer);
 
-    LoadingAnimation.display();
     try {
       this.preTrainModel = await blazeface.load();
     } catch (error) {
@@ -254,6 +254,7 @@ const cameras = {
   },
   startAndroidStream: async function () {
     try {
+      // LoadingAnimation.display();
       const livecamera = document.querySelector("#my_camera");
       this._message.textContent = "Chụp ảnh chính diện khuôn mặt";
       this._timer.textContent = "";
@@ -269,9 +270,11 @@ const cameras = {
       });
 
       Webcam.attach(livecamera);
+      LoadingAnimation.dispose();
     } catch (error) {
       console.log("init camera stream failure: ", error);
       this._message.textContent = "Trình duyệt không hỗ trợ camera: " + error.toString();
+      LoadingAnimation.dispose();
     }
   },
   handleAndroidEvent: function () {
@@ -303,17 +306,17 @@ const cameras = {
         LoadingAnimation.display();
         cameras.startAndroidStream();
         Webcam.unfreeze();
-        LoadingAnimation.dispose();
       });
 
       this._snap.addEventListener("click", function () {
-        Webcam.freeze();
+        LoadingAnimation.display();
+        cameras._message.innerHTML = `<strong style="color:${cameras.themes.main}">Loading...</strong>`;
+        cameras._snap.style = "display:none";
+        cameras._retake.style = "display:block";
+        cameras._mediaRecorded.style = "display:block";
 
+        Webcam.freeze();
         Webcam.snap(async function (data_uri, frame, context) {
-          LoadingAnimation.display();
-          cameras._snap.style = "display:none";
-          cameras._retake.style = "display:block";
-          cameras._mediaRecorded.style = "display:block";
           cameras._mediaRecorded.src = data_uri;
 
           Webcam.reset();
@@ -325,9 +328,8 @@ const cameras = {
       });
     } catch (error) {
       console.log(error);
-      this._message.textContent = error.toString();
-    } finally {
       LoadingAnimation.dispose();
+      this._message.textContent = error.toString();
     }
   },
   detectFaces: async function () {

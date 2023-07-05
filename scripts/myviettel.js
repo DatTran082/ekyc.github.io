@@ -75,7 +75,7 @@ const LoadingAnimation = {
   renderStyle: function () {
     document.querySelector("html").innerHTML += `
           <style>
-              .container-loader {position: fixed;width: 100%;top: 0;bottom: 0;display: none;background-color: rgb(0 0 0 / 0.4);justify-content: center;align-items: center;z-index:99999;}
+              .container-loader {position: fixed;width: 100%;top: 0;bottom: 0;display: none;background-color: rgb(0 0 0 / 0.4);justify-content: center;align-items: center;}
               .loading i {width: 20px;height: 20px; display: inline-block;border-radius: 50%; background: #D92727;}
               .loading i:first-child {animation: loading-ani2 0.5s linear infinite; opacity: 0;transform: translate(-20px); }
               .loading i:nth-child(2),
@@ -84,7 +84,7 @@ const LoadingAnimation = {
               @keyframes loading-ani1 {100% { transform: translate(40px);opacity: 0;}}
               @keyframes loading-ani2 {100% {transform: translate(20px); opacity: 1;}}
               @keyframes loading-ani3 {100% {transform: translate(20px);}}
-              @media only screen and (min-width: 500px) {.container-loader {width: 500px;} .profile-layout .modal-screen { max-width: 500px;} }
+              @media only screen and (min-width: 100%) {.container-loader {width: 100%;} .profile-layout .modal-screen { max-width: 100%;} }
           </style>
       `;
   },
@@ -100,7 +100,7 @@ const LoadingAnimation = {
       `;
   },
   display: function () {
-    document.querySelector(".container-loader").style.display = "flex";
+    document.querySelector(".container-loader").style = "display:flex; z-index: 9999;";
   },
   dispose: function () {
     document.querySelector(".container-loader").style.display = "none";
@@ -114,7 +114,7 @@ const LoadingAnimation = {
 
 const cameras = {
   themes: {
-    main: "#3079FF",
+    main: "#D92727",
     primary: "#EAF1FF",
   },
   _progressBar: null,
@@ -166,12 +166,10 @@ const cameras = {
       console.log("init faceDetection failure: ", error);
     }
 
-    if (cameras.device === "IOS" || cameras.device === "ANDROID") {
-      cameras.standardDeviation = { x: 85, y: 85 };
-      cameras.RECSECONDS = 6;
-      await cameras.startIOSStream();
-      cameras.handleIOSEvent();
-    }
+    cameras.standardDeviation = { x: 85, y: 85 };
+    cameras.RECSECONDS = 6;
+    await cameras.startIOSStream();
+    // if (cameras.device === "IOS" || cameras.device === "ANDROID")
     //  else {
     //   cameras.standardDeviation = { x: 175, y: -40 };
     //   cameras.RECSECONDS = 4;
@@ -187,6 +185,7 @@ const cameras = {
   },
   startIOSStream: async function () {
     try {
+      LoadingAnimation.display();
       cameras.stream = await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: { facingMode: "user" },
@@ -219,6 +218,7 @@ const cameras = {
       this._message.textContent = "Trình duyệt không hỗ trợ camera: " + error.toString();
     } finally {
       this.handleIOSEvent();
+      LoadingAnimation.dispose();
     }
   },
   handleIOSEvent: function () {

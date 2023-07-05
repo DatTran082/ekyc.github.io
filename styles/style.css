@@ -45,6 +45,8 @@
 
 .preview {
     display: none;
+    background-color: var(--primary);
+    color: #34404B;
     border: 4px solid var(--main);
 }
 
