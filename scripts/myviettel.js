@@ -200,12 +200,12 @@ const cameras = {
         this.isMediaRecorderSupported = true;
         this._message.textContent = "Đưa camera lại gần và giữ yên đến khi nhận diện được khuôn mặt";
         this.mediaRecorder = new MediaRecorder(cameras.stream, options);
+        cameras.handleIOSEvent();
       }
     } catch (error) {
       console.log("init camera stream failure: ", error);
       this._message.textContent = "Trình duyệt không hỗ trợ camera: " + error.toString();
     } finally {
-      this.handleIOSEvent();
       LoadingAnimation.dispose();
     }
   },
