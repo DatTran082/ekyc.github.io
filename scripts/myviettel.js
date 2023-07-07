@@ -167,15 +167,11 @@ const cameras = {
       console.log("init faceDetection failure: ", error);
     }
 
-    try {
-      await cameras.startIOSStream(true);
-    } catch (error) {
-      console.log("start handleEvent failure: ", error);
-    }
+    await cameras.startIOSStream();
 
     LoadingAnimation.dispose();
   },
-  startIOSStream: async function (firstInit) {
+  startIOSStream: async function () {
     try {
       LoadingAnimation.display();
       cameras.stream = await navigator.mediaDevices.getUserMedia({
@@ -204,7 +200,7 @@ const cameras = {
         this.isMediaRecorderSupported = true;
         this._message.textContent = "Đưa camera lại gần và giữ yên đến khi nhận diện được khuôn mặt";
         this.mediaRecorder = new MediaRecorder(cameras.stream, options);
-        cameras.handleIOSEvent(firstInit);
+        cameras.handleIOSEvent();
       }
     } catch (error) {
       console.log("init camera stream failure: ", error);
@@ -213,11 +209,12 @@ const cameras = {
       LoadingAnimation.dispose();
     }
   },
-  handleIOSEvent: function (firstInit) {
+  handleIOSEvent: function () {
     LoadingAnimation.display();
     try {
-      this._videoLive.addEventListener("loadeddata", function (e) {
+      this._videoLive.addEventListener("loadeddata", async () => {
         if (this.faceRunsInterval) clearInterval(this.faceRunsInterval);
+
         cameras.faceRunsInterval = setInterval(this.detectFaces, 50);
       });
 
@@ -226,36 +223,26 @@ const cameras = {
         if (this.faceVerify == true) {
           this._mediaRecorded.src = URL.createObjectURL(e.data);
 
+          // const chunks = [];
+          // chunks.push(e.data);
           const fileName = cameras.generateUUID();
           const type = cameras.device === "IOS" ? "mp4" : "webm";
           const file = new File([e.data], `${fileName}.${type}`, { type: `video/${type}` });
 
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-            cameras._faceRecord.files = dataTransfer.files;
-          }
-        });
-
-      }
-
-      this.mediaRecorder.addEventListener("stop", (e) => {
-        // e.target.ondataavailable = function (event) {
-        //   if (cameras.faceVerify) {
-        //     console.log(event);
-        //     console.log("stop ondataavailable trigger");
-        //   }
-        // };
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(file);
+          cameras._faceRecord.files = dataTransfer.files;
+        }
       });
 
       this._retake.addEventListener("click", function () {
         LoadingAnimation.display();
         if (cameras.faceVerify && cameras.stream.active == false) {
           cameras.reset();
-          cameras.startIOSStream(false);
+          cameras.startIOSStream();
         }
         LoadingAnimation.dispose();
       });
-      
     } catch (error) {
       console.log(error);
       this._message.textContent = error.toString();
@@ -276,7 +263,7 @@ const cameras = {
   processResults: function (ctx, livecam, prediction) {
     try {
       if (prediction == undefined || prediction.length == 0) {
-        this.reset("không tìm thấy khuôn mặt trong khung hình 1.0");
+        this.reset("không tìm thấy khuôn mặt trong khung hình");
         cameras.canvasHelper.drawResult(livecam, ctx, prediction, false, false, false);
       } else if (prediction.length > 1) {
         this.reset("chỉ cho phép 1 khuôn mặt trong khung hình");
@@ -302,8 +289,8 @@ const cameras = {
 
           if (cameras.device !== "IOS") {
             const percentage = Math.round(((cameras.RECSECONDS - cameras.timer.getTime()) / cameras.RECSECONDS) * 100);
-            this._timer.textContent = `${percentage}%`;
             cameras._progressBar.style.background = `conic-gradient(${cameras.themes.main} ${percentage * 3.6}deg,${cameras.themes.primary} ${percentage * 3.6}deg)`;
+            this._timer.textContent = `${percentage}%`;
           }
 
           cameras.canvasHelper.drawResult(livecam, ctx, prediction, false, true, true);
@@ -455,9 +442,7 @@ const cameras = {
   },
   start: function () {
     if (cameras.timer.getStatus() == 0 && cameras.faceVerify == false && cameras.isMediaRecorderSupported && cameras.stream.active) {
-      if (cameras.device === "IOS") {
-        cameras.runProgressBar();
-      }
+      if (cameras.device === "IOS") cameras.runProgressBar();
       cameras.timer.start(1000);
       cameras.mediaRecorder.start();
     }
@@ -484,18 +469,20 @@ const cameras = {
   stop: function () {
     this._confirm.style = "display:block";
     this._retake.style = "display:block";
+
     cameras.timer.stop();
-    cameras.faceVerify = true;
     clearInterval(cameras.faceRunsInterval);
-    window.stop();
+    cameras.faceVerify = true;
 
     if (this.isMediaRecorderSupported) {
       this._mediaRecorded.style = "display:block";
       this._canvas.style = "display:none";
       this._videoLive.style = "display:none";
+      // this.mediaRecorder.requestData();
       this.mediaRecorder.stop();
       this.stream.getTracks().forEach(function (track) {
         track.stop();
+        track.enabled = false;
       });
     }
   },
