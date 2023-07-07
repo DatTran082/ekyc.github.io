@@ -223,11 +223,11 @@ const cameras = {
         if (this.faceVerify == true) {
           this._mediaRecorded.src = URL.createObjectURL(e.data);
 
-          // const chunks = [];
-          // chunks.push(e.data);
+          const chunks = [];
+          chunks.push(e.data);
           const fileName = cameras.generateUUID();
           const type = cameras.device === "IOS" ? "mp4" : "webm";
-          const file = new File([e.data], `${fileName}.${type}`, { type: `video/${type}` });
+          const file = new File(chunks, `${fileName}.${type}`, { type: `video/${type}` });
 
           const dataTransfer = new DataTransfer();
           dataTransfer.items.add(file);
