@@ -115,7 +115,7 @@ const LoadingAnimation = {
 const cameras = {
   themes: {
     main: "#D92727",
-    primary: "#EAF1FF",
+    primary: "#ffeaea",
   },
   _progressBar: null,
   _faceRecord: null,
@@ -167,11 +167,15 @@ const cameras = {
       console.log("init faceDetection failure: ", error);
     }
 
-    await cameras.startIOSStream();
+    try {
+      await cameras.startIOSStream(true);
+    } catch (error) {
+      console.log("start handleEvent failure: ", error);
+    }
 
     LoadingAnimation.dispose();
   },
-  startIOSStream: async function () {
+  startIOSStream: async function (firstInit) {
     try {
       LoadingAnimation.display();
       cameras.stream = await navigator.mediaDevices.getUserMedia({
@@ -200,7 +204,7 @@ const cameras = {
         this.isMediaRecorderSupported = true;
         this._message.textContent = "Đưa camera lại gần và giữ yên đến khi nhận diện được khuôn mặt";
         this.mediaRecorder = new MediaRecorder(cameras.stream, options);
-        this.handleIOSEvent();
+        cameras.handleIOSEvent(firstInit);
       }
     } catch (error) {
       console.log("init camera stream failure: ", error);
@@ -209,27 +213,22 @@ const cameras = {
       LoadingAnimation.dispose();
     }
   },
-  handleIOSEvent: async function () {
+  handleIOSEvent: function (firstInit) {
     LoadingAnimation.display();
     try {
       this._videoLive.addEventListener("loadeddata", function (e) {
         if (this.faceRunsInterval) clearInterval(this.faceRunsInterval);
-
         cameras.faceRunsInterval = setInterval(this.detectFaces, 50);
       });
 
-      if (this.isMediaRecorderSupported) {
-        this.mediaRecorder.addEventListener("dataavailable", (e) => {
-          console.log("dataavailable trigger", e);
+      this.mediaRecorder.addEventListener("dataavailable", (e) => {
+        console.log("dataavailable trigger");
+        if (this.faceVerify == true) {
+          this._mediaRecorded.src = URL.createObjectURL(e.data);
 
-          if (this.faceVerify == true && e.data.size > 0) {
-            // recordedBlobs.push(e.data);
-            this._mediaRecorded.src = URL.createObjectURL(e.data);
-            // const chunks = [];
-            // chunks.push(e.data);
-            const fileName = cameras.generateUUID();
-            const type = cameras.device === "IOS" ? "mp4" : "webm";
-            const file = new File([e.data], `${fileName}.${type}`, { type: `video/${type}` });
+          const fileName = cameras.generateUUID();
+          const type = cameras.device === "IOS" ? "mp4" : "webm";
+          const file = new File([e.data], `${fileName}.${type}`, { type: `video/${type}` });
 
             const dataTransfer = new DataTransfer();
             dataTransfer.items.add(file);
@@ -251,7 +250,7 @@ const cameras = {
         LoadingAnimation.display();
         if (cameras.faceVerify && cameras.stream.active == false) {
           cameras.reset();
-          cameras.startIOSStream();
+          cameras.startIOSStream(false);
         }
         LoadingAnimation.dispose();
       });
@@ -275,7 +274,7 @@ const cameras = {
   processResults: function (ctx, livecam, prediction) {
     try {
       if (prediction == undefined || prediction.length == 0) {
-        this.reset("không tìm thấy khuôn mặt trong khung hình");
+        this.reset("không tìm thấy khuôn mặt trong khung hình 1.0");
         cameras.canvasHelper.drawResult(livecam, ctx, prediction, false, false, false);
       } else if (prediction.length > 1) {
         this.reset("chỉ cho phép 1 khuôn mặt trong khung hình");
@@ -301,8 +300,8 @@ const cameras = {
 
           if (cameras.device !== "IOS") {
             const percentage = Math.round(((cameras.RECSECONDS - cameras.timer.getTime()) / cameras.RECSECONDS) * 100);
-            cameras._progressBar.style.background = `conic-gradient(${cameras.themes.main} ${percentage * 3.6}deg,${cameras.themes.primary} ${percentage * 3.6}deg)`;
             this._timer.textContent = `${percentage}%`;
+            cameras._progressBar.style.background = `conic-gradient(${cameras.themes.main} ${percentage * 3.6}deg,${cameras.themes.primary} ${percentage * 3.6}deg)`;
           }
 
           cameras.canvasHelper.drawResult(livecam, ctx, prediction, false, true, true);
@@ -454,7 +453,9 @@ const cameras = {
   },
   start: function () {
     if (cameras.timer.getStatus() == 0 && cameras.faceVerify == false && cameras.isMediaRecorderSupported && cameras.stream.active) {
-      if (cameras.device === "IOS") cameras.runProgressBar();
+      if (cameras.device === "IOS") {
+        cameras.runProgressBar();
+      }
       cameras.timer.start(1000);
       cameras.mediaRecorder.start();
     }
@@ -481,20 +482,18 @@ const cameras = {
   stop: function () {
     this._confirm.style = "display:block";
     this._retake.style = "display:block";
-
     cameras.timer.stop();
-    clearInterval(cameras.faceRunsInterval);
     cameras.faceVerify = true;
+    clearInterval(cameras.faceRunsInterval);
+    window.stop();
 
     if (this.isMediaRecorderSupported) {
       this._mediaRecorded.style = "display:block";
       this._canvas.style = "display:none";
       this._videoLive.style = "display:none";
-      // this.mediaRecorder.requestData();
       this.mediaRecorder.stop();
       this.stream.getTracks().forEach(function (track) {
         track.stop();
-        track.enabled = false;
       });
     }
   },
