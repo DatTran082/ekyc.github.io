@@ -236,15 +236,16 @@ const cameras = {
           }
         });
 
-        this.mediaRecorder.addEventListener("stop", (e) => {
-          // e.target.ondataavailable = function (event) {
-          //   if (cameras.faceVerify) {
-          //     console.log(event);
-          //     console.log("stop ondataavailable trigger");
-          //   }
-          // };
-        });
       }
+
+      this.mediaRecorder.addEventListener("stop", (e) => {
+        // e.target.ondataavailable = function (event) {
+        //   if (cameras.faceVerify) {
+        //     console.log(event);
+        //     console.log("stop ondataavailable trigger");
+        //   }
+        // };
+      });
 
       this._retake.addEventListener("click", function () {
         LoadingAnimation.display();
@@ -254,6 +255,7 @@ const cameras = {
         }
         LoadingAnimation.dispose();
       });
+      
     } catch (error) {
       console.log(error);
       this._message.textContent = error.toString();
