@@ -200,7 +200,7 @@ const cameras = {
         this.isMediaRecorderSupported = true;
         this._message.textContent = "Đưa camera lại gần và giữ yên đến khi nhận diện được khuôn mặt";
         this.mediaRecorder = new MediaRecorder(cameras.stream, options);
-        cameras.handleIOSEvent();
+        this.handleIOSEvent();
       }
     } catch (error) {
       console.log("init camera stream failure: ", error);
@@ -209,31 +209,43 @@ const cameras = {
       LoadingAnimation.dispose();
     }
   },
-  handleIOSEvent: function () {
+  handleIOSEvent: async function () {
     LoadingAnimation.display();
     try {
-      this._videoLive.addEventListener("loadeddata", async () => {
+      this._videoLive.addEventListener("loadeddata", function (e) {
         if (this.faceRunsInterval) clearInterval(this.faceRunsInterval);
 
         cameras.faceRunsInterval = setInterval(this.detectFaces, 50);
       });
 
-      this.mediaRecorder.addEventListener("dataavailable", (e) => {
-        console.log("dataavailable trigger");
-        if (this.faceVerify == true) {
-          this._mediaRecorded.src = URL.createObjectURL(e.data);
+      if (this.isMediaRecorderSupported) {
+        this.mediaRecorder.addEventListener("dataavailable", (e) => {
+          console.log("dataavailable trigger", e);
 
-          // const chunks = [];
-          // chunks.push(e.data);
-          const fileName = cameras.generateUUID();
-          const type = cameras.device === "IOS" ? "mp4" : "webm";
-          const file = new File([e.data], `${fileName}.${type}`, { type: `video/${type}` });
+          if (this.faceVerify == true && e.data.size > 0) {
+            // recordedBlobs.push(e.data);
+            this._mediaRecorded.src = URL.createObjectURL(e.data);
+            // const chunks = [];
+            // chunks.push(e.data);
+            const fileName = cameras.generateUUID();
+            const type = cameras.device === "IOS" ? "mp4" : "webm";
+            const file = new File([e.data], `${fileName}.${type}`, { type: `video/${type}` });
 
-          const dataTransfer = new DataTransfer();
-          dataTransfer.items.add(file);
-          cameras._faceRecord.files = dataTransfer.files;
-        }
-      });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            cameras._faceRecord.files = dataTransfer.files;
+          }
+        });
+
+        this.mediaRecorder.addEventListener("stop", (e) => {
+          // e.target.ondataavailable = function (event) {
+          //   if (cameras.faceVerify) {
+          //     console.log(event);
+          //     console.log("stop ondataavailable trigger");
+          //   }
+          // };
+        });
+      }
 
       this._retake.addEventListener("click", function () {
         LoadingAnimation.display();
