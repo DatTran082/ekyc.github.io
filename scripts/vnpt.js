@@ -166,18 +166,24 @@ const cameras = {
       console.log("init faceDetection failure: ", error);
     }
 
-    if (cameras.device === "IOS") {
-      cameras.standardDeviation = { x: 85, y: 85 };
-      cameras.RECSECONDS = 6;
-      await cameras.startIOSStream();
-      cameras.handleIOSEvent();
-    } else {
-      cameras._mediaRecorded = document.querySelector("#imageRecorded");
-      cameras.standardDeviation = { x: 175, y: -40 };
-      cameras.RECSECONDS = 4;
-      await cameras.startAndroidStream();
-      cameras.handleAndroidEvent();
-    }
+    cameras._mediaRecorded = document.querySelector("#imageRecorded");
+    cameras.standardDeviation = { x: 175, y: -40 };
+    cameras.RECSECONDS = 4;
+    await cameras.startAndroidStream();
+    cameras.handleAndroidEvent();
+
+    // if (cameras.device === "IOS") {
+    //   cameras.standardDeviation = { x: 85, y: 85 };
+    //   cameras.RECSECONDS = 6;
+    //   await cameras.startIOSStream();
+    //   cameras.handleIOSEvent();
+    // } else {
+    //   cameras._mediaRecorded = document.querySelector("#imageRecorded");
+    //   cameras.standardDeviation = { x: 175, y: -40 };
+    //   cameras.RECSECONDS = 4;
+    //   await cameras.startAndroidStream();
+    //   cameras.handleAndroidEvent();
+    // }
 
     this.timer.reset(cameras.RECSECONDS);
     this.timer.mode(0);
@@ -262,6 +268,8 @@ const cameras = {
       Webcam.set({
         width: this._progressBar.width,
         height: this._progressBar.height,
+        dest_width: null,
+        dest_height: null,
         image_format: "jpeg",
         jpeg_quality: 90,
         force_flash: false,
@@ -287,8 +295,14 @@ const cameras = {
         livecam[0].height = cameras._videoLive.height;
 
         cameras._videoLive = livecam[0];
+
         cameras._canvas.style.transform = "none";
         cameras._videoLive.classList.add("video");
+
+        console.table([
+          ["width", cameras._videoLive.width],
+          ["height", cameras._videoLive.height],
+        ]);
       });
 
       Webcam.on("live", function () {
@@ -315,9 +329,15 @@ const cameras = {
         cameras._retake.style = "display:block";
         cameras._mediaRecorded.style = "display:block";
 
+        Webcam.set({
+          dest_width: 640,
+          dest_height: 480,
+        });
+
         Webcam.freeze();
         Webcam.snap(async function (data_uri, frame, context) {
           cameras._mediaRecorded.src = data_uri;
+          // cameras._mediaRecorded.style = "object-fit: cover;";
 
           Webcam.reset();
 
