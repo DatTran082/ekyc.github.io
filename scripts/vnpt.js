@@ -330,8 +330,8 @@ const cameras = {
         cameras._mediaRecorded.style = "display:block";
 
         Webcam.set({
-          dest_width: 640,
-          dest_height: 480,
+          dest_width: cameras._videoLive.width,
+          dest_height: cameras._videoLive.height,
         });
 
         Webcam.freeze();
