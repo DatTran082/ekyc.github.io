@@ -166,24 +166,19 @@ const cameras = {
       console.log("init faceDetection failure: ", error);
     }
 
+    //if (cameras.device === "IOS") {
+    //    cameras.standardDeviation = { x: 85, y: 85 };
+    //    cameras.RECSECONDS = 6;
+    //    await cameras.startIOSStream();
+    //    cameras.handleIOSEvent();
+    //} else {
+    //}
+
     cameras._mediaRecorded = document.querySelector("#imageRecorded");
-    cameras.standardDeviation = { x: 175, y: -40 };
+    // cameras.standardDeviation = { x: 175, y: -40 };
     cameras.RECSECONDS = 4;
     await cameras.startAndroidStream();
     cameras.handleAndroidEvent();
-
-    // if (cameras.device === "IOS") {
-    //   cameras.standardDeviation = { x: 85, y: 85 };
-    //   cameras.RECSECONDS = 6;
-    //   await cameras.startIOSStream();
-    //   cameras.handleIOSEvent();
-    // } else {
-    //   cameras._mediaRecorded = document.querySelector("#imageRecorded");
-    //   cameras.standardDeviation = { x: 175, y: -40 };
-    //   cameras.RECSECONDS = 4;
-    //   await cameras.startAndroidStream();
-    //   cameras.handleAndroidEvent();
-    // }
 
     this.timer.reset(cameras.RECSECONDS);
     this.timer.mode(0);
@@ -295,14 +290,8 @@ const cameras = {
         livecam[0].height = cameras._videoLive.height;
 
         cameras._videoLive = livecam[0];
-
         cameras._canvas.style.transform = "none";
         cameras._videoLive.classList.add("video");
-
-        console.table([
-          ["width", cameras._videoLive.width],
-          ["height", cameras._videoLive.height],
-        ]);
       });
 
       Webcam.on("live", function () {
@@ -331,13 +320,12 @@ const cameras = {
 
         Webcam.set({
           dest_width: cameras._videoLive.width,
-          dest_height: cameras._videoLive.height,
+          dest_height: cameras._videoLive.height + 360,
         });
 
         Webcam.freeze();
         Webcam.snap(async function (data_uri, frame, context) {
           cameras._mediaRecorded.src = data_uri;
-          // cameras._mediaRecorded.style = "object-fit: cover;";
 
           Webcam.reset();
 
@@ -405,9 +393,20 @@ const cameras = {
       } else {
         const probability = prediction[0].probability[0];
 
-        if (prediction[0].topLeft[0] < 30 || prediction[0].topLeft[0] > 290 || prediction[0].topLeft[1] < 0 || prediction[0].topLeft[1] > 250) {
+        if (prediction[0].topLeft[0] < 30) {
           this.reset("Giữ cho khuôn mặt ở chính giữa và cách màn hình khoảng 25cm");
-        } else if (probability < 0.998) {
+          //left
+        } else if (prediction[0].topLeft[0] > 290) {
+          this.reset("Giữ cho khuôn mặt ở chính giữa và cách màn hình khoảng 25cm");
+          //right
+        } else if (prediction[0].topLeft[1] < 100) {
+          // top
+          this.reset("Giữ cho khuôn mặt ở chính giữa và cách màn hình khoảng 25cm");
+        } else if (prediction[0].topLeft[1] > 360) {
+          this.reset("Giữ cho khuôn mặt ở chính giữa và cách màn hình khoảng 25cm");
+          //bottom
+          // this.reset("Giữ cho khuôn mặt ở chính giữa và cách màn hình khoảng 25cm");
+        } else if (probability < 0.999) {
           this.reset("Giữ cho khuôn mặt không bị che chắn và cách màn hình khoảng 25cm");
         } else {
           this._message.innerHTML = "Thực hiện thành công";
