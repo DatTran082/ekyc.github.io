@@ -311,6 +311,10 @@ const cameras = {
         Webcam.unfreeze();
       });
 
+      this._confirm.addEventListener("click", function () {
+        LoadingAnimation.display();
+      });
+
       this._snap.addEventListener("click", function () {
         LoadingAnimation.display();
         cameras._message.innerHTML = `<strong style="color:${cameras.themes.main}">Loading...</strong>`;

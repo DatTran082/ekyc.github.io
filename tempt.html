@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://cdn.jsdelivr.net/npm/dynamsoft-label-recognizer@2.2.11/dist/dlr.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/dynamsoft-camera-enhancer@3.0.1/dist/dce.js"></script>
+
+        <title>Document</title>
+    </head>
+    <body>
+        <input type="file" id="file" accept="image/*" />
+        <div id="videoview">
+            <div class="dce-video-container" id="videoContainer"></div>
+            <canvas id="overlay"></canvas>
+        </div>
+
+    </body>
+    <script>
+
+document.getElementById("file").addEventListener("change", function () {
+         let file = this.files[0];
+         if (recognizer) {
+             recognizer.recognize(file).then(function (results) {
+                 for (let result of results) {
+                     if (result.lineResults.length == 2) {
+                         let lines = result.lineResults;
+                         let line1 = lines[0].text;
+                         let line2 = lines[1].text;
+                         document.getElementById('result').innerHTML = extractMRZInfo(line1, line2);
+                     }
+                 }
+             });
+         }
+     });
+
+
+     function extractMRZInfo(line1, line2) {
+     // https://en.wikipedia.org/wiki/Machine-readable_passport
+     let result = "";
+     // Type
+     let tmp = "Type: ";
+     tmp += line1[0];
+     result += tmp + "<br>";
+    
+     // Issuing country
+     tmp = "Issuing country: ";
+     tmp += line1.substring(2, 5);
+     result += tmp + "<br>";
+    
+     // Surname
+     let index = 5;
+     tmp = "Surname: ";
+     for (; index < 44; index++) {
+         if (line1[index] != '<') {
+             tmp += line1[index];
+         } else {
+             break;
+         }
+     }
+     result += tmp + "<br>";
+    
+     // Given names
+     tmp = "Given Names: ";
+     index += 2;
+     for (; index < 44; index++) {
+         if (line1[index] != '<') {
+             tmp += line1[index];
+         } else {
+             tmp += ' ';
+         }
+     }
+     result += tmp + "<br>";
+    
+     // Passport number
+     tmp = "Passport number: ";
+     index = 0;
+     for (; index < 9; index++) {
+         if (line2[index] != '<') {
+             tmp += line2[index];
+         } else {
+             break;
+         }
+     }
+     result += tmp + "<br>";
+    
+     // Nationality
+     tmp = "Nationality: ";
+     tmp += line2.substring(10, 13);
+     result += tmp + "<br>";
+    
+     // Date of birth
+     tmp = line2.substring(13, 19);
+     tmp = tmp.substring(0, 2) +
+         '/' +
+         tmp.substring(2, 4) +
+         '/' +
+         tmp.substring(4, 6);
+     tmp = "Date of birth (YYMMDD): " + tmp;
+     result += tmp + "<br>";
+    
+     // Sex
+     tmp = "Sex: ";
+     tmp += line2[20];
+     result += tmp + "<br>";
+    
+     // Expiration date of passport
+     tmp = line2.substring(21, 27);
+     tmp = tmp.substring(0, 2) +
+         '/' +
+         tmp.substring(2, 4) +
+         '/' +
+         tmp.substring(4, 6);
+     tmp = "Expiration date of passport (YYMMDD): " + tmp;
+     result += tmp + "<br>";
+    
+     // Personal number
+     if (line2[28] != '<') {
+         tmp = "Personal number: ";
+         for (index = 28; index < 42; index++) {
+             if (line2[index] != '<') {
+                 tmp += line2[index];
+             } else {
+                 break;
+             }
+         }
+         result += tmp + "<br>";
+     }
+    
+     return result;
+ }
+    Dynamsoft.DLR.LabelRecognizer.initLicense("DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==");
+    
+    (async () => {
+        Dynamsoft.DLR.LabelRecognizer.onResourcesLoadStarted = (resourcePath) => {
+        };
+        Dynamsoft.DLR.LabelRecognizer.onResourcesLoaded = (resourcePath) => {
+            document.getElementById('loading-status').hidden = false;
+        };
+    
+        cameraEnhancer = await Dynamsoft.DCE.CameraEnhancer.createInstance();
+        recognizer = await Dynamsoft.DLR.LabelRecognizer.createInstance();
+        await cameraEnhancer.setUIElement(document.getElementById('videoContainer'));
+        await recognizer.setImageSource(cameraEnhancer, {resultsHighlightBaseShapes: Dynamsoft.DCE.DrawingItem});
+        await recognizer.updateRuntimeSettingsFromString("MRZ");
+    
+        let cameras = await cameraEnhancer.getAllCameras();
+        listCameras(cameras);
+        await openCamera();
+    
+        recognizer.onImageRead = results => {
+            clearOverlay();
+            lines = getResults(results);
+            if (lines) div.innerHTML = extractMRZInfo(lines[0], lines[1]);
+            else div.innerHTML = "";
+            
+            for (let result of results) {
+                for (let lineResult of result.lineResults) {
+                    drawOverlay(lineResult.location.points, "");
+                }
+            }
+        };
+        cameraEnhancer.on("played", playCallBackInfo => {
+            updateResolution();
+        });
+        await recognizer.startScanning(true);
+    })();    
+    </script>
+</html>
