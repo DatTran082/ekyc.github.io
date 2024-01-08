@@ -99,3 +99,19 @@
     color: var(--main);
     background-color: var(--primary);
 }
+
+.frame {
+    width: "343px";
+    height: "217px";
+    box-shadow: "0 0 0 2000px rgba(0, 0, 0, .5)";
+    position: "absolute";
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: "auto";
+    border: "2px solid white";
+    border-radius: 12px;
+    pointer-events: "none";
+    z-index: 2;
+}
