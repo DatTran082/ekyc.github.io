@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="./styles/style.css">
+    <link rel="stylesheet" href="./styles/sapo.css">
     <script src="./models/jsdelivr.net_npm_@tensorflow_tfjs"></script>
     <script src="./models/jsdelivr.net_npm_@tensorflow-models_blazeface"></script>
     <script type="text/javascript" src="https://mvnpt.amft.vn/webcamjs/webcam.min.js"></script>
@@ -20,28 +20,31 @@
 
   <body>
     <form id="FaceAuthenForm">
-      <div id="header">
-        <h3>Xác thực khuôn mặt</h3>
-        <div id="timer">0%</div>
+      
+      <div class="container">
+
+        <div class="header">
+          <h3>Xác thực khuôn mặt</h3>
+          <div id="message">Đưa CCCD vào khung hình để chụp</div>
+        </div>
+
+        <div id="my_camera" class="videostream" ></div>
+
+        <!-- <div class="frame"></div> -->
+        <!-- <canvas id="canvas" class="canvas" ></canvas> -->
+       
+        <img class="preview"  style="display: none" alt="loading..." id="imageRecorded"></img>
+        
+  
+        <div class="btngroup">
+          <button type="button" id="snap">Chụp ảnh</button>
+          <button type="button" id="retake">Thử lại</button>
+          <button type="button" id="confirm">Xác nhận</button>
+        </div>
       </div>
 
-      <div class="box" id="progressBar">
-        <video class="video" autoplay muted playsinline id="videoLive" width="650px" height="480px"> </video>
-        <div id="my_camera" class="video" width="650px" height="480px"></div>
-        <div id='frame' class="frame"></div>
-        <canvas id="canvas" class="canvas" width="650px" height="480px"></canvas>
-
-        <img class="preview" width="650px" height="480px" style="display: none" alt="loading..." id="imageRecorded"></img>
-      </div>
-
-      <div id="message">Đưa camera lại gần đến khi nhận diện được khuôn mặt</div>
-
-      <div class="btngroup">
-        <input id="faceRecord" type="file" name="videoFile" style="display: none;">
-        <button type="button" id="snap">Chụp ảnh</button>
-        <button type="button" id="retake">Thử lại</button>
-        <button type="button" id="confirm">Xác nhận</button>
-      </div>
+      <input id="faceRecord"  name="videoFile" style="display: none;">
+      
       
     </form>
 
