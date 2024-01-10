@@ -156,7 +156,7 @@ const cameras = {
     this.device = cameras.getMobileOperatingSystem();
     this.ctx = this._canvas.getContext("2d");
     this.timer = new _timerHandle(this.handleTimer);
-    // cameras.standardDeviation = { x: 85, y: 85 };
+    cameras.standardDeviation = { x: 85, y: 85 };
     this.timer.reset(cameras.RECSECONDS);
     this.timer.mode(0);
 
